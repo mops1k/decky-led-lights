@@ -68,54 +68,87 @@ def region_color(frame, width, x0, y0, x1, y1):
 
 
 EDGE_BAND = 0.10
+EDGE_MIN_BAND = 0.04
+EDGE_MAX_BAND = 0.30
+EDGE_ABXY_POSITIONS = ("bottom", "top", "center")
 # Screen border slices for the four LEDs around a stick ring, top to bottom.
 _EDGE_SLICES = ((0.02, 0.26), (0.26, 0.50), (0.50, 0.74), (0.74, 0.98))
 
 
-def edge_layout(zones):
+def clamp_band(value, default=EDGE_BAND):
+    try:
+        band = float(value)
+    except (TypeError, ValueError):
+        return default
+    return max(EDGE_MIN_BAND, min(EDGE_MAX_BAND, band))
+
+
+def edge_layout(zones, band=EDGE_BAND, reverse=False, abxy="bottom"):
     """Edge ambilight layout: every LED reads the screen border next to it.
 
     The MSI Claw family has nine zones: 0-3 around the right stick, 4-7 around the
     left stick and 8 on the ABXY buttons, so the ring LEDs map to the matching side
-    of the screen and the button zone reads the bottom edge. Any other zone count
-    falls back to an even ring around the four screen borders.
+    of the screen and the button zone reads one edge. ``reverse`` flips the ring
+    slices (bottom-up instead of top-down) and ``abxy`` picks the edge for the
+    button zone. Any other zone count falls back to an even ring of the borders.
     """
     zones = int(zones)
     if zones <= 0:
         return []
+    band = clamp_band(band)
+    abxy = abxy if abxy in EDGE_ABXY_POSITIONS else "bottom"
     if zones == 9:
+        slices = list(_EDGE_SLICES)
+        if reverse:
+            slices = list(reversed(slices))
         layout = []
-        for index, (y0, y1) in enumerate(_EDGE_SLICES):
+        for index, (y0, y1) in enumerate(slices):
             layout.append(
                 {
                     "name": "Left stick",
-                    "region": [0.0, y0, EDGE_BAND, y1],
+                    "region": [0.0, y0, band, y1],
                     "zones": [4 + index],
                 }
             )
-        for index, (y0, y1) in enumerate(_EDGE_SLICES):
+        for index, (y0, y1) in enumerate(slices):
             layout.append(
                 {
                     "name": "Right stick",
-                    "region": [1.0 - EDGE_BAND, y0, 1.0, y1],
+                    "region": [1.0 - band, y0, 1.0, y1],
                     "zones": [index],
                 }
             )
         layout.append(
             {
                 "name": "Lights",
-                "region": [0.30, 1.0 - EDGE_BAND, 0.70, 1.0],
+                "region": _abxy_region(band, abxy),
                 "zones": [8],
             }
         )
         return layout
     return [
         {"name": "Lights", "region": list(region), "zones": [index]}
-        for index, region in enumerate(_perimeter_regions(zones))
+        for index, region in enumerate(_perimeter_regions(zones, band))
     ]
 
 
-def _perimeter_regions(count):
+def _abxy_region(band, abxy):
+    if abxy == "top":
+        return [0.30, 0.0, 0.70, band]
+    if abxy == "center":
+        return [0.30, 0.42, 0.70, 0.58]
+    return [0.30, 1.0 - band, 0.70, 1.0]
+
+
+def _perimeter_slices(count, reverse=False):
+    slices = _EDGE_SLICES if count == 4 else None
+    if slices is None:
+        step = 1.0 / max(1, count)
+        slices = tuple((index * step, (index + 1) * step) for index in range(count))
+    return list(reversed(slices)) if reverse else list(slices)
+
+
+def _perimeter_regions(count, band=EDGE_BAND):
     # Even ring: the borders are split into four runs and every zone reads a slice
     # of the run it lands on, starting at the top edge and going clockwise.
     shares = []
@@ -129,13 +162,13 @@ def _perimeter_regions(count):
     for side, share in zip(sides, shares):
         for start, end in _split(share):
             if side == "top":
-                regions.append([start, 0.0, end, EDGE_BAND])
+                regions.append([start, 0.0, end, band])
             elif side == "right":
-                regions.append([1.0 - EDGE_BAND, start, 1.0, end])
+                regions.append([1.0 - band, start, 1.0, end])
             elif side == "bottom":
-                regions.append([start, 1.0 - EDGE_BAND, end, 1.0])
+                regions.append([start, 1.0 - band, end, 1.0])
             else:
-                regions.append([0.0, start, EDGE_BAND, end])
+                regions.append([0.0, start, band, end])
     return regions
 
 

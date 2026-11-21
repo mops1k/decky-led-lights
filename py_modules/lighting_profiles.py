@@ -6,10 +6,15 @@ import os
 _NESTED_FIELDS = {"effect", "ambilight"}
 AMBILIGHT_SAMPLING_MODES = ("columns", "bottom_edge")
 AMBILIGHT_LAYOUT_MODES = ("sticks", "edge")
+EDGE_ABXY_POSITIONS = ("bottom", "top", "center")
 
 
 def _layout(value, fallback):
     return value if value in AMBILIGHT_LAYOUT_MODES else fallback
+
+
+def _choice(value, options, fallback):
+    return value if value in options else fallback
 
 
 def _integer(value, fallback, minimum=0, maximum=100):
@@ -222,6 +227,17 @@ class LightingProfileStore:
             "fps": _integer(raw_ambient.get("fps"), base_ambient["fps"], 1, 60),
             "sampling": sampling if sampling in AMBILIGHT_SAMPLING_MODES else base_ambient["sampling"],
             "layout": _layout(raw_ambient.get("layout"), base_ambient.get("layout", "edge")),
+            "edge_band": _integer(
+                raw_ambient.get("edge_band"), base_ambient.get("edge_band", 10), 4, 30
+            ),
+            "edge_reverse": _boolean(
+                raw_ambient.get("edge_reverse"), base_ambient.get("edge_reverse", False)
+            ),
+            "edge_abxy": _choice(
+                raw_ambient.get("edge_abxy"),
+                EDGE_ABXY_POSITIONS,
+                base_ambient.get("edge_abxy", "bottom"),
+            ),
             "audio": _boolean(raw_ambient.get("audio"), base_ambient.get("audio", False)),
         }
         result["battery_breathe"] = _boolean(

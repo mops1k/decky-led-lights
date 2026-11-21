@@ -109,3 +109,30 @@ def test_edge_layout_covers_every_zone_once_for_other_devices():
             x0, y0, x1, y1 = group["region"]
             assert 0.0 <= x0 < x1 <= 1.0
             assert 0.0 <= y0 < y1 <= 1.0
+
+
+def test_edge_layout_band_and_abxy_edge_are_configurable():
+    from ambient_sampling import EDGE_MAX_BAND, EDGE_MIN_BAND, edge_layout
+
+    wide = edge_layout(9, band=0.2)
+    assert wide[0]["region"][2] == pytest.approx(0.2)
+    assert wide[4]["region"][0] == pytest.approx(0.8)
+
+    reversed_layout = edge_layout(9, reverse=True)
+    default = edge_layout(9)
+    assert reversed_layout[0]["region"][1] > default[0]["region"][1]
+
+    top = edge_layout(9, abxy="top")[-1]["region"]
+    assert top[1] == pytest.approx(0.0)
+    center = edge_layout(9, abxy="center")[-1]["region"]
+    assert center[1] < center[3] <= 0.6
+
+    assert edge_layout(9, band=5)[0]["region"][2] == pytest.approx(EDGE_MAX_BAND)
+    assert edge_layout(9, band=0)[0]["region"][2] == pytest.approx(EDGE_MIN_BAND)
+
+
+def test_edge_layout_unknown_abxy_falls_back_to_bottom():
+    from ambient_sampling import edge_layout
+
+    bottom = edge_layout(9)[-1]["region"]
+    assert edge_layout(9, abxy="sideways")[-1]["region"] == bottom

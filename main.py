@@ -9,7 +9,8 @@ import time
 import decky
 
 from version import read_version
-from device import build_device, build_layout
+from ambient_sampling import EDGE_ABXY_POSITIONS, edge_layout
+from device import build_device
 from settings_store import SettingsStore
 from effects import (
     BATTERY_BANDS,
@@ -69,6 +70,9 @@ DEFAULTS = {
         "fps": 10,
         "sampling": "columns",
         "layout": "edge",
+        "edge_band": 10,
+        "edge_reverse": False,
+        "edge_abxy": "bottom",
         "audio": False,
     },
     "saved_gradients": [],
@@ -105,6 +109,7 @@ PROFILE_DEFAULTS = {key: DEFAULTS[key] for key in PROFILE_KEYS}
 GLOBAL_KEYS = tuple(key for key in DEFAULTS if key not in PROFILE_KEYS)
 
 CHARGER_POLL_INTERVAL = 3.0
+ZONE_PREVIEW_SECONDS = 0.7
 
 SCREEN_POLL_INTERVAL = 0.2
 SCREEN_IDLE_INTERVAL = 1.0
@@ -250,6 +255,13 @@ def _normalize_ambilight_settings(settings: dict | None) -> dict:
     normalized["vividness"] = max(0, min(100, int(vividness)))
     if normalized.get("layout") not in AMBILIGHT_LAYOUT_MODES:
         normalized["layout"] = "edge"
+    try:
+        normalized["edge_band"] = max(4, min(30, int(normalized.get("edge_band", 10))))
+    except (TypeError, ValueError):
+        normalized["edge_band"] = 10
+    normalized["edge_reverse"] = bool(normalized.get("edge_reverse", False))
+    if normalized.get("edge_abxy") not in EDGE_ABXY_POSITIONS:
+        normalized["edge_abxy"] = "bottom"
     normalized.pop("saturation", None)
     return normalized
 
@@ -1350,6 +1362,50 @@ class Plugin:
     async def set_ambilight_sampling(self, mode: str) -> None:
         await self.patch_profile("global", None, {"ambilight": {"sampling": mode}})
 
+    async def set_ambilight_edge(self, band: int, reverse: bool, abxy: str) -> None:
+        if abxy not in EDGE_ABXY_POSITIONS:
+            return
+        await self.patch_profile(
+            "global",
+            None,
+            {
+                "ambilight": {
+                    "edge_band": max(4, min(30, int(band))),
+                    "edge_reverse": bool(reverse),
+                    "edge_abxy": abxy,
+                }
+            },
+        )
+
+    async def preview_zones(self) -> None:
+        """Walk the LEDs one by one so the user can map them to the screen."""
+        self._init()
+        if self._zones < 2:
+            return
+        task = getattr(self, "_zone_preview_task", None)
+        if task is not None and not task.done():
+            return
+        self._zone_preview_task = asyncio.create_task(self._run_zone_preview())
+
+    async def _run_zone_preview(self) -> None:
+        decky.logger.info("Led Lights: zone preview start")
+        try:
+            self._ambilight.stop()
+            self._audio.stop()
+            self._engine.stop()
+            for zone in range(self._zones):
+                frame = [(0, 0, 0)] * self._zones
+                frame[zone] = (255, 255, 255)
+                self._render(frame)
+                await asyncio.sleep(ZONE_PREVIEW_SECONDS)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - never break the panel on a preview
+            decky.logger.warning("Led Lights: zone preview failed: %s", error)
+        finally:
+            self._zone_preview_task = None
+            self._apply()
+
     async def set_ambilight_layout(self, layout: str) -> None:
         if layout not in AMBILIGHT_LAYOUT_MODES:
             return
@@ -1714,7 +1770,12 @@ class Plugin:
                 self._audio.stop()
             layout = self._capabilities.get("layout")
             if amb.get("layout") == "edge":
-                layout = build_layout(self._zones, False, "edge")
+                layout = edge_layout(
+                    self._zones,
+                    band=max(4, min(30, int(amb.get("edge_band", 10)))) / 100.0,
+                    reverse=bool(amb.get("edge_reverse", False)),
+                    abxy=amb.get("edge_abxy", "bottom"),
+                )
             self._ambilight.start(
                 {
                     "saturation": 1.0 + (amb["vividness"] / 100) * 1.5,

@@ -40,6 +40,18 @@ KWIN_NO_PYGOBJECT = 5
 KWIN_MAX_FPS = 15
 _GAMESCOPE_COMMS = (b"gamescope", b"steamcompmgr")
 
+# Colour changes smaller than this (8-bit levels, per channel) are treated as sensor
+# noise and ignored, so static screens never make the LEDs shimmer.
+DEADBAND = 8
+# Average per-channel frame delta at or below this means "nothing is moving".
+IDLE_DELTA = 3
+# After this many unchanged frames the capture rate drops to SLOW_CAPTURE_FPS; the
+# helper keeps the same process so no reconnect/white flash happens.
+IDLE_FRAMES_BEFORE_SLOW = 20
+SLOW_CAPTURE_FPS = 3
+# A helper that stops producing frames is treated as dead after this long.
+CAPTURE_TIMEOUT = 10.0
+
 _FULL_REGION = [0.0, 0.0, 1.0, 1.0]
 
 # pw_capture.py on the host Python asks gamescope for a small GPU-scaled frame; GStreamer is
@@ -238,6 +250,9 @@ class Ambilight:
         self._proc = None
         self._options = {}
         self._kwin_failed = False
+        self._previous_frame = None
+        self._idle_frames = 0
+        self._sent_fps = None
         self.status = "idle"
         self._current = [(0, 0, 0)] * self._zones
         self._targets = [(0, 0, 0)] * self._zones
@@ -292,12 +307,6 @@ class Ambilight:
             if not is_lease_companion(client.get("application.process.id", "")):
                 return props["object.serial"]
         return None
-
-    def _capture_interval(self):
-        fps = max(1, int(self._options.get("fps", 10)))
-        if self._max_fps is not None:
-            fps = min(fps, max(1, int(self._max_fps)))
-        return 1.0 / fps
 
     async def _find_node(self):
         # Async so the retry loop never blocks the event loop while waiting on pw-dump
@@ -427,11 +436,13 @@ class Ambilight:
                 command = _gst_command(node, CAP_W, CAP_H)
             proc = None
             reader_task = None
+            stderr_task = None
             started = time.monotonic()
             logger.info("ambilight start: node=%s fps=%.0f", node, 1.0 / self._capture_interval())
             try:
                 proc = await asyncio.create_subprocess_exec(
                     *command,
+                    stdin=asyncio.subprocess.PIPE if backend == "kwin" else asyncio.subprocess.DEVNULL,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     env=self._env(),
@@ -439,17 +450,28 @@ class Ambilight:
                 )
                 self._proc = proc
                 self.status = "running"
+                self._sent_fps = None
+                self._idle_frames = 0
+                self._previous_frame = None
+                stderr_task = asyncio.create_task(self._drain_stderr(proc))
+                await self._sync_capture_rate()
                 frames = asyncio.Queue(maxsize=1)
                 reader_task = asyncio.create_task(
                     _read_latest_frames(proc.stdout, frame_bytes, frames)
                 )
                 while True:
-                    frame = await frames.get()
+                    frame = await asyncio.wait_for(frames.get(), timeout=CAPTURE_TIMEOUT)
                     if isinstance(frame, Exception):
                         raise frame
                     self._update_targets(frame)
                     self._tick()
+                    await self._sync_capture_rate()
                     await asyncio.sleep(self._capture_interval())
+            except asyncio.TimeoutError:
+                # The helper is alive but not producing frames: recycle it.
+                self.status = "no_source"
+                logger.warning("ambilight capture timed out; reconnecting")
+                self._apply(self._fallback())
             except asyncio.IncompleteReadError:
                 self.status = "no_source"
                 await self._log_exit(proc)
@@ -464,6 +486,9 @@ class Ambilight:
             except Exception:
                 logger.exception("ambilight loop failed")
             finally:
+                if stderr_task is not None:
+                    stderr_task.cancel()
+                    await asyncio.gather(stderr_task, return_exceptions=True)
                 if reader_task is not None:
                     reader_task.cancel()
                     await asyncio.gather(reader_task, return_exceptions=True)
@@ -478,29 +503,57 @@ class Ambilight:
             await asyncio.sleep(retry_delay(drops))
 
     async def _log_exit(self, proc):
+        # stderr is drained continuously by _drain_stderr, so only the exit code is
+        # reported here instead of reading a pipe that someone else owns.
         if proc is None:
             return
-        err = b""
         try:
-            err = await proc.stderr.read()
             await asyncio.wait_for(proc.wait(), timeout=2)
         except (OSError, ValueError, asyncio.TimeoutError):
             pass
-        logger.warning(
-            "ambilight stream ended (rc=%s): %s",
-            proc.returncode,
-            err.decode(errors="replace")[:300],
-        )
+        logger.warning("ambilight stream ended (rc=%s)", proc.returncode)
 
     def _sample(self, frame, box, region):
         return region_color(frame, CAP_W, *region_pixels(box, region))
 
+    def _frame_delta(self, frame):
+        previous = self._previous_frame
+        self._previous_frame = frame
+        if previous is None or len(previous) != len(frame):
+            return None
+        total = 0
+        for old, new in zip(previous, frame):
+            total += abs(old - new)
+        return total // len(frame)
+
+    def _deadband(self):
+        try:
+            return max(0, min(64, int(self._options.get("deadband", DEADBAND))))
+        except (TypeError, ValueError):
+            return DEADBAND
+
+    def _settle(self, zone, color):
+        # Hold the previous colour for changes below the deadband: capture noise on a
+        # static screen would otherwise flicker one level at a time.
+        deadband = self._deadband()
+        if deadband <= 0:
+            return color
+        previous = self._targets[zone]
+        if max(abs(new - old) for new, old in zip(color, previous)) < deadband:
+            return previous
+        return color
+
     def _update_targets(self, frame):
+        delta = self._frame_delta(frame)
+        if delta is not None and delta <= IDLE_DELTA:
+            self._idle_frames += 1
+        else:
+            self._idle_frames = 0
         sat = float(self._options.get("saturation", 1.4))
         box = self._box_tracker.update(content_box(frame, CAP_W, CAP_H))
         if self._options.get("global_color"):
             target = boost_saturation(self._sample(frame, box, _FULL_REGION), sat)
-            self._targets = [target] * self._zones
+            self._targets = [self._settle(zone, target) for zone in range(self._zones)]
             return
         bottom_edge = self._options.get("sampling") == "bottom_edge"
         for group in self._layout:
@@ -511,11 +564,56 @@ class Ambilight:
                 region = (x0, y1 - (y1 - y0) * 0.28, x1, y1)
             for sub, zone in zip(subdivide(region, len(indices)), indices):
                 if 0 <= zone < self._zones:
-                    self._targets[zone] = boost_saturation(self._sample(frame, box, sub), sat)
+                    color = boost_saturation(self._sample(frame, box, sub), sat)
+                    self._targets[zone] = self._settle(zone, color)
 
     def _kwin_fps(self):
         cap = KWIN_MAX_FPS if self._max_fps is None else min(KWIN_MAX_FPS, int(self._max_fps))
         return max(1, cap)
+
+    def _capture_interval(self):
+        fps = max(1, int(self._options.get("fps", 10)))
+        if self._max_fps is not None:
+            fps = min(fps, max(1, int(self._max_fps)))
+        if self._idle_frames >= IDLE_FRAMES_BEFORE_SLOW:
+            fps = min(fps, SLOW_CAPTURE_FPS)
+        return 1.0 / fps
+
+    async def _send_capture_rate(self, fps):
+        # The desktop helper reads "fps N" from stdin, so the rate can follow the
+        # scene without restarting the capture process.
+        proc = self._proc
+        stdin = getattr(proc, "stdin", None) if proc is not None else None
+        if stdin is None:
+            return
+        try:
+            stdin.write(f"fps {int(fps)}\n".encode())
+            await stdin.drain()
+            self._sent_fps = int(fps)
+        except (BrokenPipeError, ConnectionResetError, OSError, AttributeError):
+            pass
+
+    async def _sync_capture_rate(self):
+        want = self._kwin_fps()
+        if self._idle_frames >= IDLE_FRAMES_BEFORE_SLOW:
+            want = SLOW_CAPTURE_FPS
+        if want != self._sent_fps:
+            await self._send_capture_rate(want)
+
+    async def _drain_stderr(self, proc):
+        stderr = getattr(proc, "stderr", None)
+        if stderr is None:
+            return
+        try:
+            while True:
+                line = await stderr.readline()
+                if not line:
+                    return
+                text = line.decode(errors="replace").strip()
+                if text:
+                    logger.info("ambilight capture: %s", text[:200])
+        except (asyncio.CancelledError, ValueError, OSError):
+            return
 
     def _helper_fps(self):
         # Fixed so option changes never reconnect; the loop throttles to the chosen fps.

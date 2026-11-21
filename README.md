@@ -27,6 +27,9 @@ the Steam Quick Access Menu and pick a colour.
   vividness and capture-rate controls. No portal dialog, no extra permissions.
 - **Languages.** English is the default language and a complete Russian translation
   is included. The self-updater is disabled: the fork has no release feed of its own.
+- **Quieter, cheaper capture.** A deadband ignores single-level colour noise so static
+  screens do not shimmer, a static screen drops the capture rate to 3 fps, and the
+  capture helper is recycled if it stops producing frames.
 - **CI and packaging.** GitHub Actions run the backend and frontend test suites, build
   the bundle and attach a ready-to-install ZIP; tagging `v*` publishes a release.
 
@@ -88,7 +91,13 @@ The plugin needs root to write the LEDs; Decky asks for it during installation.
 1. Open the Quick Access Menu and select **Led Lights**.
 2. Choose the **Ambilight** mode tab.
 3. Pick the layout: **Sticks** (upstream behaviour) or **Screen edges** (TV-style).
-4. Tune vividness, smoothing and capture rate. LED colour follows the nearest screen
+4. With the edge layout, tune the border width (**Edge size**), flip the ring order
+   (**Reverse ring order**) and choose where the ABXY zone reads from (**Bottom**,
+   **Top** or **Center**).
+5. Press **Test zones** to light every zone in turn: 0-3 is the right stick ring,
+   4-7 the left ring and 8 the ABXY buttons. If the order looks mirrored on your
+   unit, toggle **Reverse ring order**.
+6. Tune vividness, smoothing and capture rate. LED colour follows the nearest screen
    border, so a red wall on the left lights the left stick ring red.
 
 ## Development

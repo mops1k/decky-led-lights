@@ -16,6 +16,9 @@ DEFAULT_PROFILE = {
         "fps": 10,
         "sampling": "columns",
         "layout": "sticks",
+        "edge_band": 10,
+        "edge_reverse": False,
+        "edge_abxy": "bottom",
         "audio": False,
     },
     "battery_breathe": True,
@@ -70,6 +73,9 @@ def test_nested_effect_and_ambilight_updates_are_merged(tmp_path):
         "fps": 30,
         "sampling": "columns",
         "layout": "sticks",
+        "edge_band": 10,
+        "edge_reverse": False,
+        "edge_abxy": "bottom",
         "audio": False,
     }
 

@@ -574,6 +574,8 @@ function Content() {
     setAmbilight,
     setAmbilightSampling,
     setAmbilightLayout,
+    setAmbilightEdge,
+    previewZones,
     setAmbilightAudio,
     saveGradient,
     deleteGradient,
@@ -977,6 +979,90 @@ function Content() {
                   />
                 </div>
               </PanelSectionRow>
+            )}
+            {ambilight.layout === "edge" && (
+              <>
+                <PanelSectionRow>
+                  <SliderField
+                    label={t("ambient.edgeBand")}
+                    value={ambilight.edge_band ?? 10}
+                    min={4}
+                    max={30}
+                    step={1}
+                    valueSuffix="%"
+                    showValue
+                    disabled={!power}
+                    onChange={(burst) =>
+                      setAmbilightEdge(
+                        burst,
+                        !!ambilight.edge_reverse,
+                        ambilight.edge_abxy ?? "bottom",
+                      )
+                    }
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <ToggleField
+                    label={t("ambient.edgeReverse")}
+                    checked={!!ambilight.edge_reverse}
+                    disabled={!power}
+                    onChange={(reverse) =>
+                      setAmbilightEdge(
+                        ambilight.edge_band ?? 10,
+                        reverse,
+                        ambilight.edge_abxy ?? "bottom",
+                      )
+                    }
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "rgba(255,255,255,0.55)",
+                      padding: "2px 2px 6px",
+                    }}
+                  >
+                    {t("ambient.edgeAbxy")}
+                  </div>
+                  <Tabs<string>
+                    value={ambilight.edge_abxy ?? "bottom"}
+                    tabs={["bottom", "top", "center"]}
+                    onChange={(edge) =>
+                      setAmbilightEdge(
+                        ambilight.edge_band ?? 10,
+                        !!ambilight.edge_reverse,
+                        edge,
+                      )
+                    }
+                    label={(edge) =>
+                      t(
+                        `ambient.edgeAbxy.${edge}` as
+                          | "ambient.edgeAbxy.bottom"
+                          | "ambient.edgeAbxy.top"
+                          | "ambient.edgeAbxy.center",
+                      )
+                    }
+                  />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <ButtonItem layout="below" onClick={previewZones} disabled={!power}>
+                    {t("ambient.testZones")}
+                  </ButtonItem>
+                </PanelSectionRow>
+                <PanelSectionRow>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.45)",
+                      padding: "0 2px 10px",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {t("ambient.testZones.hint")}
+                  </div>
+                </PanelSectionRow>
+              </>
             )}
             {capabilities.layoutKind === "bar" && (
               <PanelSectionRow>

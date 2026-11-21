@@ -82,6 +82,9 @@ export interface AmbilightState {
   fps: number;
   sampling: string;
   layout?: string;
+  edge_band?: number;
+  edge_reverse?: boolean;
+  edge_abxy?: string;
   audio?: boolean;
 }
 

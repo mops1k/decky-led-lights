@@ -567,3 +567,79 @@ def test_letterbox_bars_are_left_out_of_the_sample():
 
     amb._update_targets(bytes(frame))
     assert amb._targets[0] == (200, 40, 20)
+
+
+def _solid(color, cap_w=None, cap_h=None):
+    width = cap_w or CAP_W
+    height = cap_h or CAP_H
+    pixel = bytes(color)
+    return pixel * (width * height)
+
+
+def test_deadband_holds_the_colour_against_capture_noise():
+    layout = [{"name": "Lights", "region": [0.0, 0.0, 1.0, 1.0], "zones": [0]}]
+    amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None, layout=layout)
+    amb._options = {"saturation": 1.0, "deadband": 12}
+
+    amb._update_targets(_solid((255, 0, 0)))
+    settled = amb._targets[0]
+    amb._update_targets(_solid((248, 2, 1)))
+    assert amb._targets[0] == settled
+
+    amb._update_targets(_solid((0, 0, 255)))
+    assert amb._targets[0][2] > 200
+
+
+def test_deadband_zero_keeps_every_change():
+    layout = [{"name": "Lights", "region": [0.0, 0.0, 1.0, 1.0], "zones": [0]}]
+    amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None, layout=layout)
+    amb._options = {"saturation": 1.0, "deadband": 0}
+    amb._update_targets(_solid((255, 0, 0)))
+    first = amb._targets[0]
+    amb._update_targets(_solid((248, 0, 0)))
+    assert amb._targets[0] != first
+
+
+def test_capture_rate_drops_when_the_screen_is_static():
+    amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None)
+    amb._options = {"fps": 10}
+    assert amb._capture_interval() == pytest.approx(0.1)
+    amb._update_targets(_solid((10, 10, 10)))
+    amb._idle_frames = ambilight_mod.IDLE_FRAMES_BEFORE_SLOW
+    assert amb._capture_interval() == pytest.approx(1.0 / ambilight_mod.SLOW_CAPTURE_FPS)
+    amb._update_targets(_solid((200, 0, 0)))
+    assert amb._idle_frames == 0
+
+
+class _FakeStdin:
+    def __init__(self):
+        self.lines = []
+
+    def write(self, data):
+        self.lines.append(data.decode())
+
+    async def drain(self):
+        return None
+
+
+class _FakeProc:
+    def __init__(self):
+        self.stdin = _FakeStdin()
+
+
+def test_capture_rate_commands_are_sent_to_the_helper():
+    async def drive():
+        amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None, max_fps=15)
+        proc = _FakeProc()
+        amb._proc = proc
+        amb._options = {"fps": 10}
+        amb._idle_frames = 0
+        await amb._sync_capture_rate()
+        amb._idle_frames = ambilight_mod.IDLE_FRAMES_BEFORE_SLOW
+        await amb._sync_capture_rate()
+        assert proc.stdin.lines == [
+            f"fps {ambilight_mod.KWIN_MAX_FPS}\n",
+            f"fps {ambilight_mod.SLOW_CAPTURE_FPS}\n",
+        ]
+
+    asyncio.run(drive())

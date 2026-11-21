@@ -9,6 +9,7 @@ Exit codes: 0 stdout closed, 2 capture lost, 4 KWin ScreenShot2 unavailable,
 5 helper dependencies missing (no Gio).
 """
 import os
+import select
 import sys
 import time
 
@@ -161,6 +162,50 @@ def downsample_python(data, width, height, stride, order, out_w, out_h):
     return bytes(frame)
 
 
+RATE_COMMAND = "fps"
+# The plugin steers the capture rate over stdin ("fps 3") so a static screen costs
+# less; the process itself is never restarted for that.
+STDIN_POLL_TIMEOUT = 0.0
+
+
+def parse_rate_command(line, current):
+    """Return the fps requested by a stdin line, or ``current`` when it is noise."""
+    parts = (line or "").split()
+    if len(parts) != 2 or parts[0] != RATE_COMMAND:
+        return current
+    try:
+        requested = int(parts[1])
+    except ValueError:
+        return current
+    return max(1, min(60, requested))
+
+
+class RateReader:
+    def __init__(self, stream=None):
+        self.stream = stream if stream is not None else sys.stdin
+        self.open = True
+
+    def poll(self, current):
+        if not self.open:
+            return current
+        try:
+            ready, _, _ = select.select([self.stream], [], [], STDIN_POLL_TIMEOUT)
+        except (OSError, ValueError, TypeError):
+            self.open = False
+            return current
+        if not ready:
+            return current
+        try:
+            line = self.stream.readline()
+        except (OSError, ValueError, TypeError):
+            self.open = False
+            return current
+        if not line:
+            self.open = False
+            return current
+        return parse_rate_command(line, current)
+
+
 def build_downsampler(out_w, out_h):
     np = _numpy_source()
     if np is not None:
@@ -203,6 +248,7 @@ def main(argv):
     interval = 1.0 / fps
     capture = KwinCapture(width, height)
     downsample = build_downsampler(width, height)
+    rates = RateReader()
     try:
         conn = capture._connection()
     except Exception as error:
@@ -211,6 +257,10 @@ def main(argv):
     out = sys.stdout.buffer
     fails = 0
     while True:
+        requested = rates.poll(fps)
+        if requested != fps:
+            fps = requested
+            interval = 1.0 / fps
         started = time.monotonic()
         try:
             data, src_w, src_h, stride, fmt = capture.frame(conn)

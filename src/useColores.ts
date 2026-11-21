@@ -375,6 +375,21 @@ export function useColores() {
     });
   };
 
+  const setAmbilightEdge = (band: number, reverse: boolean, abxy: string) => {
+    setState((s) =>
+      s
+        ? { ...s, ambilight: { ...s.ambilight, edge_band: band, edge_reverse: reverse, edge_abxy: abxy } }
+        : s,
+    );
+    void pushProfile(snapshotProfileTarget(profileTarget.current), {
+      ambilight: { edge_band: band, edge_reverse: reverse, edge_abxy: abxy },
+    });
+  };
+
+  const previewZones = () => {
+    void api.previewZones();
+  };
+
   const setAmbilightAudio = (audio: boolean) => {
     setState((s) => (s ? { ...s, ambilight: { ...s.ambilight, audio } } : s));
     void pushProfile(snapshotProfileTarget(profileTarget.current), {
@@ -503,6 +518,8 @@ export function useColores() {
     setAmbilight,
     setAmbilightSampling,
     setAmbilightLayout,
+    setAmbilightEdge,
+    previewZones,
     setAmbilightAudio,
     saveGradient,
     deleteGradient,
