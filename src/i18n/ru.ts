@@ -212,6 +212,8 @@ export const ru: Record<string, string> = {
   "calibration.save": "Сохранить",
   "ambient.audio": "Реагировать на звук",
   "ambient.audio.hint": "Интенсивность пульсирует в такт звуку.",
+  "ambient.audioBase": "Фоновая яркость",
+  "ambient.audioBase.hint": "Между ударами подсветка остаётся на этой яркости, а на бит вспыхивает до максимума.",
   "styles.title": "Сохранённые пресеты",
   "styles.saveButton.desc": "Сохраните эту подсветку под именем.",
   "styles.saveButton": "Сохранить пресет",

@@ -27,6 +27,10 @@ the Steam Quick Access Menu and pick a colour.
   vividness and capture-rate controls. No portal dialog, no extra permissions.
 - **Languages.** English is the default language and a complete Russian translation
   is included. The self-updater is disabled: the fork has no release feed of its own.
+- **Sound that flashes instead of strobing.** With sound reaction enabled, the lights
+  stay at a configurable base brightness (80 % by default) and flash to full on
+  detected beats, so the screen colours stay visible in silence. The old build dimmed
+  the whole case to 25 % between sounds and repainted up to 30 times a second.
 - **Quieter, cheaper capture.** A deadband ignores single-level colour noise so static
   screens do not shimmer, a static screen drops the capture rate to 3 fps, and the
   capture helper is recycled if it stops producing frames.
@@ -58,7 +62,8 @@ control.
   and more), an auto palette, a "Surprise me" button and saved favourites.
 - **Effects**: breathing, rainbow, wave, cycle and spiral, optionally running on your
   own gradient.
-- **Ambilight** that follows the screen, with vividness, smoothing and capture rate.
+- **Ambilight** that follows the screen, with vividness, smoothing, capture rate, an
+  optional beat flash and a base-brightness control for it.
 - **Sensors, clock and audio modes**: battery level, temperature, performance load,
   a time-of-day tint and a VU meter.
 - **Languages**: English (default), Spanish, Russian, Italian, German, Brazilian

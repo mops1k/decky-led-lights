@@ -575,6 +575,7 @@ function Content() {
     setAmbilightSampling,
     setAmbilightLayout,
     setAmbilightEdge,
+    setAmbilightAudioBase,
     previewZones,
     setAmbilightAudio,
     saveGradient,
@@ -1087,6 +1088,22 @@ function Content() {
                   onChange={setAmbilightAudio}
                   disabled={!power}
                   bottomSeparator="none"
+                />
+              </PanelSectionRow>
+            )}
+            {capabilities.audioMode && ambilight.audio && (
+              <PanelSectionRow>
+                <SliderField
+                  label={t("ambient.audioBase")}
+                  description={t("ambient.audioBase.hint")}
+                  value={ambilight.audio_base ?? 80}
+                  min={50}
+                  max={100}
+                  step={5}
+                  valueSuffix="%"
+                  showValue
+                  disabled={!power}
+                  onChange={setAmbilightAudioBase}
                 />
               </PanelSectionRow>
             )}

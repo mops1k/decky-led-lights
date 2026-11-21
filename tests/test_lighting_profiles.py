@@ -20,6 +20,7 @@ DEFAULT_PROFILE = {
         "edge_reverse": False,
         "edge_abxy": "bottom",
         "audio": False,
+        "audio_base": 80,
     },
     "battery_breathe": True,
     "temperature_breathe": True,
@@ -77,6 +78,7 @@ def test_nested_effect_and_ambilight_updates_are_merged(tmp_path):
         "edge_reverse": False,
         "edge_abxy": "bottom",
         "audio": False,
+        "audio_base": 80,
     }
 
     store.patch("global", None, {"ambilight": {"audio": True}})

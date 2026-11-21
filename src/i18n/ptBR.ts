@@ -212,6 +212,8 @@ export const ptBR: Record<string, string> = {
   "calibration.save": "Salvar",
   "ambient.audio": "Reagir ao som",
   "ambient.audio.hint": "A intensidade pulsa com o que está tocando.",
+  "ambient.audioBase": "Brilho base",
+  "ambient.audioBase.hint": "Entre as batidas as luzes ficam neste brilho e piscam no máximo a cada batida.",
   "styles.title": "Ajustes salvos",
   "styles.saveButton.desc": "Salve esta luz com um nome.",
   "styles.saveButton": "Salvar ajuste",

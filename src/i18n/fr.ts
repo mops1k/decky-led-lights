@@ -254,6 +254,8 @@ export const fr: Record<string, string> = {
   "calibration.save": "Enregistrer",
   "ambient.audio": "Réagir au son",
   "ambient.audio.hint": "L'intensité pulse au rythme de ce que vous écoutez.",
+  "ambient.audioBase": "Luminosité de base",
+  "ambient.audioBase.hint": "Entre deux frappes, les LED restent à cette luminosité et flashent au maximum à chaque frappe.",
   "styles.title": "Réglages enregistrés",
   "styles.saveButton.desc": "Enregistre cet éclairage sous un nom.",
   "styles.saveButton": "Enregistrer le réglage",

@@ -390,6 +390,13 @@ export function useColores() {
     void api.previewZones();
   };
 
+  const setAmbilightAudioBase = (base: number) => {
+    setState((s) => (s ? { ...s, ambilight: { ...s.ambilight, audio_base: base } } : s));
+    void pushProfile(snapshotProfileTarget(profileTarget.current), {
+      ambilight: { audio_base: base },
+    });
+  };
+
   const setAmbilightAudio = (audio: boolean) => {
     setState((s) => (s ? { ...s, ambilight: { ...s.ambilight, audio } } : s));
     void pushProfile(snapshotProfileTarget(profileTarget.current), {
@@ -519,6 +526,7 @@ export function useColores() {
     setAmbilightSampling,
     setAmbilightLayout,
     setAmbilightEdge,
+    setAmbilightAudioBase,
     previewZones,
     setAmbilightAudio,
     saveGradient,

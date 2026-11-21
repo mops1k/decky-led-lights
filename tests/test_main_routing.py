@@ -1892,7 +1892,8 @@ def test_aurora_meters_audio_alongside_ambilight(main_module):
     p._apply()
     assert p._ambilight.events[-1][0] == "start"
     kind, options = p._audio.events[-1]
-    assert kind == "start" and callable(options["on_level"])
+    assert kind == "start" and options["mode"] == "aurora"
+    assert options["base"] == pytest.approx(0.8)
 
 
 def test_plain_ambilight_keeps_audio_stopped(main_module):
@@ -1901,34 +1902,14 @@ def test_plain_ambilight_keeps_audio_stopped(main_module):
     assert p._audio.events[-1] == ("stop",)
 
 
-def test_aurora_scales_the_screen_colors_with_the_sound(main_module):
+def test_aurora_scales_the_screen_colors_with_the_base_brightness(main_module):
     p = _aurora(main_module)
-    p._audio.level = 0.0
+    p._audio.level = 0.8
     p._render([(200, 100, 0), (0, 0, 40)])
-    assert p._controller.calls[-1][1] == [(50, 25, 0), (0, 0, 10)]
+    assert p._controller.calls[-1][1] == [(160, 80, 0), (0, 0, 32)]
     p._audio.level = 1.0
     p._render([(200, 100, 0), (0, 0, 40)])
     assert p._controller.calls[-1][1] == [(200, 100, 0), (0, 0, 40)]
-
-
-def test_aurora_level_repaints_the_last_screen_frame(main_module):
-    p = _aurora(main_module)
-    p._capabilities["maxRenderFps"] = 30
-    p._audio.level = 1.0
-    p._render([(200, 100, 0), (0, 0, 40)])
-    p._last_render_at = 0.0
-    p._audio.level = 0.5
-    p._on_aurora_level(0.5)
-    assert p._controller.calls[-1][1] == [(125, 63, 0), (0, 0, 25)]
-
-
-def test_aurora_level_respects_device_cadence(main_module):
-    p = _aurora(main_module)
-    p._capabilities["maxRenderFps"] = 2
-    p._render([(200, 100, 0), (0, 0, 40)])
-    calls = len(p._controller.calls)
-    p._on_aurora_level(0.5)
-    assert len(p._controller.calls) == calls
 
 
 def test_aurora_does_not_touch_other_modes(main_module):
@@ -1953,14 +1934,11 @@ def test_aurora_waits_for_the_meter_before_dimming(main_module):
     assert p._controller.calls[-1][1] == [(200, 100, 0), (0, 0, 40)]
 
 
-def test_settings_change_forgets_the_aurora_frame(main_module):
+def test_aurora_without_a_level_keeps_the_screen_colors(main_module):
     p = _aurora(main_module)
+    p._audio.level = 0.0
     p._render([(200, 100, 0), (0, 0, 40)])
-    p._apply()
-    p._controller.calls.clear()
-    p._last_render_at = 0.0
-    p._on_aurora_level(0.5)
-    assert p._controller.calls == []
+    assert p._controller.calls[-1][1] == [(200, 100, 0), (0, 0, 40)]
 
 
 def test_aurora_without_audio_falls_back_to_plain_ambilight(main_module):

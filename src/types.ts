@@ -86,6 +86,7 @@ export interface AmbilightState {
   edge_reverse?: boolean;
   edge_abxy?: string;
   audio?: boolean;
+  audio_base?: number;
 }
 
 export type EffectId =

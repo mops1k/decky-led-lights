@@ -224,6 +224,8 @@ export const it: Record<string, string> = {
   "calibration.save": "Salva",
   "ambient.audio": "Reagisci al suono",
   "ambient.audio.hint": "L'intensità pulsa con ciò che stai ascoltando.",
+  "ambient.audioBase": "Luminosità base",
+  "ambient.audioBase.hint": "Tra un colpo e l'altro le luci restano a questa luminosità e lampeggiano al massimo sui colpi.",
   "styles.title": "Preset salvati",
   "styles.saveButton.desc": "Salva questa luce con un nome.",
   "styles.saveButton": "Salva preset",

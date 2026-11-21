@@ -212,6 +212,8 @@ export const de: Record<string, string> = {
   "calibration.save": "Speichern",
   "ambient.audio": "Auf Ton reagieren",
   "ambient.audio.hint": "Die Intensität pulsiert mit dem, was gerade läuft.",
+  "ambient.audioBase": "Grundhelligkeit",
+  "ambient.audioBase.hint": "Zwischen den Schlägen bleiben die LEDs auf dieser Helligkeit und blitzen bei jedem Schlag auf.",
   "styles.title": "Gespeicherte Voreinstellungen",
   "styles.saveButton.desc": "Speichere diese Beleuchtung unter einem Namen.",
   "styles.saveButton": "Voreinstellung speichern",

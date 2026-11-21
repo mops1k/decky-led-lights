@@ -239,6 +239,9 @@ class LightingProfileStore:
                 base_ambient.get("edge_abxy", "bottom"),
             ),
             "audio": _boolean(raw_ambient.get("audio"), base_ambient.get("audio", False)),
+            "audio_base": _integer(
+                raw_ambient.get("audio_base"), base_ambient.get("audio_base", 80), 50, 100
+            ),
         }
         result["battery_breathe"] = _boolean(
             source.get("battery_breathe"), base["battery_breathe"]

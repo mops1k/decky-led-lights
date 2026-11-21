@@ -74,6 +74,7 @@ DEFAULTS = {
         "edge_reverse": False,
         "edge_abxy": "bottom",
         "audio": False,
+        "audio_base": 80,
     },
     "saved_gradients": [],
     "styles": [],
@@ -117,7 +118,6 @@ SCREEN_RAMP_SECONDS = 0.4
 SCREEN_CHANGE_EPS = 0.005
 SCREEN_MAX_RAMP_FPS = 30
 CALIBRATION_PREVIEW_TIMEOUT = 90.0
-AURORA_FLOOR = 0.25
 STYLES_FILE_LIMIT = 256 * 1024
 STYLES_FILE_NAME = "colores-estilos.json"
 STYLES_EXPORT_FOLDERS = ("Documents", "Led Lights")
@@ -260,6 +260,10 @@ def _normalize_ambilight_settings(settings: dict | None) -> dict:
     except (TypeError, ValueError):
         normalized["edge_band"] = 10
     normalized["edge_reverse"] = bool(normalized.get("edge_reverse", False))
+    try:
+        normalized["audio_base"] = max(50, min(100, int(normalized.get("audio_base", 80))))
+    except (TypeError, ValueError):
+        normalized["audio_base"] = 80
     if normalized.get("edge_abxy") not in EDGE_ABXY_POSITIONS:
         normalized["edge_abxy"] = "bottom"
     normalized.pop("saturation", None)
@@ -1648,15 +1652,6 @@ class Plugin:
         s = self._settings
         return s["mode"] == "ambient" and bool(s.get("ambilight", {}).get("audio"))
 
-    def _on_aurora_level(self, _level) -> None:
-        frame = getattr(self, "_aurora_frame", None)
-        if frame is None or not self._aurora_active():
-            return
-        fps = max(1, self._capabilities.get("maxRenderFps", 30) or 1)
-        if time.monotonic() - getattr(self, "_last_render_at", 0.0) < 1.0 / fps:
-            return
-        self._render(frame)
-
     def _render(self, zone_colors) -> None:
         if self._leds_yielded():
             return
@@ -1669,11 +1664,15 @@ class Plugin:
             self._aurora_frame = zone_colors
         zone_colors = self._calibrated(zone_colors)
         if aurora and self._audio.status == "running":
-            factor = AURORA_FLOOR + (1.0 - AURORA_FLOOR) * self._audio.level
-            zone_colors = [
-                tuple(math.floor(channel * factor + 0.5) for channel in color)
-                for color in zone_colors
-            ]
+            # The audio meter already reports a brightness factor between the user's
+            # base and full scale, so silence keeps the screen colours visible and
+            # beats flash on top of them.
+            factor = max(0.0, min(1.0, float(self._audio.level)))
+            if factor > 0.0:
+                zone_colors = [
+                    tuple(math.floor(channel * factor + 0.5) for channel in color)
+                    for color in zone_colors
+                ]
         self._controller.apply_zones(
             zone_colors, self._led_brightness(), self._effective_power()
         )
@@ -1765,7 +1764,12 @@ class Plugin:
             self._engine.stop()
             amb = s["ambilight"]
             if amb.get("audio"):
-                self._audio.start({"on_level": self._on_aurora_level})
+                self._audio.start(
+                    {
+                        "mode": "aurora",
+                        "base": amb.get("audio_base", 80) / 100.0,
+                    }
+                )
             else:
                 self._audio.stop()
             layout = self._capabilities.get("layout")
@@ -1795,7 +1799,7 @@ class Plugin:
         if s["mode"] == "vu":
             self._ambilight.stop()
             self._engine.stop()
-            self._audio.start()
+            self._audio.start({"mode": "vu"})
             return
 
         self._ambilight.stop()
