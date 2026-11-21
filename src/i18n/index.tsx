@@ -4,10 +4,12 @@ import { it } from "./it";
 import { de } from "./de";
 import { ptBR } from "./ptBR";
 import { fr } from "./fr";
+import { ru } from "./ru";
 
 const LANGUAGE_OPTIONS = [
   { data: "es", label: "Español" },
   { data: "en", label: "English" },
+  { data: "ru", label: "Русский" },
   { data: "it", label: "Italiano" },
   { data: "de", label: "Deutsch" },
   { data: "pt-BR", label: "Português (Brasil)" },
@@ -46,8 +48,8 @@ const es: Record<string, string> = {
   "chargerOnly.hint": "Las luces se encienden solo cuando el cargador está conectado.",
   "startup.remember": "Recordar al arrancar",
   "startup.remember.hint": "Al fijar un color se guarda para que la barra arranque con él. Si lo apagas, al reiniciar la barra vuelve a SteamOS.",
-  "forceControl.label": "Priorizar Colores",
-  "forceControl.hint": "Recupera el control de las luces al abrir Colores.",
+  "forceControl.label": "Priorizar Led Lights",
+  "forceControl.hint": "Recupera el control de las luces al abrir Led Lights.",
   "forceControl.notice":
     "Para evitar conflictos, desactiva el control RGB de HHD u otros módulos que gestionen las luces.",
   "reconnect.label": "Reconectar mandos",
@@ -147,11 +149,14 @@ const es: Record<string, string> = {
   "effect.spiral.legion.label": "Espiral GO",
   "effect.spiral.firmwareNote": "Efecto giratorio propio del firmware de tu Legion Go.",
 
-  "ambient.gameModeBanner": "Aún no hay pantalla que leer. Ambilight funciona en Modo Juego con un juego abierto (no en Escritorio ni Big Picture).",
+  "ambient.gameModeBanner": "Todavía no hay pantalla que leer. En Escritorio se captura la pantalla activa; en Modo Juego, el juego en marcha.",
   "ambient.stickHint": "Las luces siguen la pantalla cerca de cada joystick. La izquierda desde arriba a la izquierda, la derecha desde el centro a la derecha.",
   "ambient.globalHint": "Las luces siguen el color medio de toda la pantalla.",
   "ambient.sampling.columns": "Columnas",
   "ambient.sampling.bottom_edge": "Borde inferior",
+  "ambient.layout.sticks": "Sticks",
+  "ambient.layout.edge": "Bordes de la pantalla",
+  "ambient.edgeHint": "Cada LED toma el color del borde más cercano: las zonas izquierdas leen el borde izquierdo, las derechas el derecho y ABXY el borde inferior.",
   "ambient.vividness": "Vivacidad",
   "ambient.smoothing": "Suavizado",
   "ambient.captureRate": "Tasa de captura",
@@ -269,11 +274,11 @@ const es: Record<string, string> = {
   "sleepCharging.hint": "Hace parpadear los anillos mientras la consola está suspendida y cargando.",
 
   "report.button": "Enviar un reporte",
-  "report.button.desc": "¿Algo falla o te gustaría añadir una función a Colores? Cuéntamelo y enviaré también el contexto técnico de las luces.",
+  "report.button.desc": "¿Algo falla o te gustaría añadir una función a Led Lights? Cuéntamelo y enviaré también el contexto técnico de las luces.",
   "report.unvalidated.note": "Aún no tengo esta máquina físicamente. Hago lo posible por darle soporte y tus reportes ayudan muchísimo a afinar las luces.",
   "report.title": "Enviar un reporte",
   "report.intro": "Marca qué falla y cuéntame lo que veas. Recojo la info técnica de las luces automáticamente.",
-  "report.intro.feature": "Esto no es un fallo. Cuéntame qué te gustaría añadir o mejorar en Colores; también recogeré el contexto técnico de las luces.",
+  "report.intro.feature": "Esto no es un fallo. Cuéntame qué te gustaría añadir o mejorar en Led Lights; también recogeré el contexto técnico de las luces.",
   "report.section.kind": "¿Qué quieres enviar?",
   "report.kind.bug": "Un problema",
   "report.kind.feature": "Una petición o idea",
@@ -336,8 +341,8 @@ const en: Record<string, string> = {
   "chargerOnly.hint": "The lights turn on only when the charger is connected.",
   "startup.remember": "Remember at startup",
   "startup.remember.hint": "Setting a color saves it so the bar boots with it. Turn off to hand the bar back to SteamOS on the next reboot.",
-  "forceControl.label": "Prioritize Colores",
-  "forceControl.hint": "Reclaims the lights whenever you open Colores.",
+  "forceControl.label": "Prioritize Led Lights",
+  "forceControl.hint": "Reclaims the lights whenever you open Led Lights.",
   "forceControl.notice":
     "To avoid conflicts, disable RGB control in HHD or any other module that manages the lights.",
   "reconnect.label": "Reconnect controllers",
@@ -437,11 +442,14 @@ const en: Record<string, string> = {
   "effect.spiral.legion.label": "Spiral GO",
   "effect.spiral.firmwareNote": "Your Legion Go's built-in rotating firmware effect.",
 
-  "ambient.gameModeBanner": "No screen to read yet. Ambient works in Game Mode with a game running (not in Desktop or Big Picture).",
+  "ambient.gameModeBanner": "No screen to read yet. In Desktop Mode the active screen is captured; in Game Mode, the running game.",
   "ambient.stickHint": "Lights follow the screen near each stick. Left from the top-left, right from the mid-right.",
   "ambient.globalHint": "Lights follow the average color across the whole screen.",
   "ambient.sampling.columns": "Columns",
   "ambient.sampling.bottom_edge": "Bottom edge",
+  "ambient.layout.sticks": "Sticks",
+  "ambient.layout.edge": "Screen edges",
+  "ambient.edgeHint": "Each LED takes the colour of the nearest screen edge: left zones read the left edge, right zones the right one, and ABXY the bottom edge.",
   "ambient.vividness": "Vividness",
   "ambient.smoothing": "Smoothing",
   "ambient.captureRate": "Capture rate",
@@ -559,11 +567,11 @@ const en: Record<string, string> = {
   "sleepCharging.hint": "Blinks the rings while the console is asleep and charging.",
 
   "report.button": "Send a report",
-  "report.button.desc": "Something broken or have a feature in mind for Colores? Tell me and I'll include the lighting's technical context.",
+  "report.button.desc": "Something broken or have a feature in mind for Led Lights? Tell me and I'll include the lighting's technical context.",
   "report.unvalidated.note": "I don't have this machine physically yet. I'm doing my best to support it, and your reports help a lot to fine-tune the lights.",
   "report.title": "Send a report",
   "report.intro": "Tick what's wrong and tell me what you saw. I collect the technical LED info automatically.",
-  "report.intro.feature": "This is not a bug report. Tell me what you would like added or improved in Colores; I'll also collect the lighting's technical context.",
+  "report.intro.feature": "This is not a bug report. Tell me what you would like added or improved in Led Lights; I'll also collect the lighting's technical context.",
   "report.section.kind": "What would you like to send?",
   "report.kind.bug": "A problem",
   "report.kind.feature": "A request or idea",
@@ -601,7 +609,15 @@ const en: Record<string, string> = {
   "report.retry": "Retry",
 };
 
-export const DICTS: Record<Lang, Record<string, string>> = { es, en, it, de, "pt-BR": ptBR, fr };
+export const DICTS: Record<Lang, Record<string, string>> = {
+  es,
+  en,
+  ru,
+  it,
+  de,
+  "pt-BR": ptBR,
+  fr,
+};
 
 type Params = Record<string, string | number>;
 
@@ -620,9 +636,9 @@ export function translate(lang: Lang, key: string, params?: Params): string {
 }
 
 const FALLBACK_I18N: I18nValue = {
-  lang: "es",
+  lang: "en",
   setLang: () => {},
-  t: (key, params) => translate("es", key, params),
+  t: (key, params) => translate("en", key, params),
 };
 
 const I18nContext = createContext<I18nValue | null>(null);
@@ -634,7 +650,7 @@ export function readInitialLang(): Lang {
   } catch {
     void 0;
   }
-  return "es";
+  return "en";
 }
 
 export const I18nProvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -672,6 +688,7 @@ const FLAG_SVGS: Record<Lang, string> = {
   de: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><path d="M0 0h24v5.33H0z"/><path fill="#d00" d="M0 5.33h24v5.34H0z"/><path fill="#ffce00" d="M0 10.67h24V16H0z"/></svg>',
   "pt-BR": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><path fill="#009739" d="M0 0h24v16H0z"/><path fill="#fedd00" d="m12 2 9 6-9 6-9-6z"/><circle cx="12" cy="8" r="3.5" fill="#012169"/><path fill="none" stroke="#fff" stroke-width=".7" d="M8.8 7.2c2.2-.7 4.4-.3 6.5 1"/></svg>',
   fr: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><path fill="#002395" d="M0 0h8v16H0z"/><path fill="#fff" d="M8 0h8v16H8z"/><path fill="#ed2939" d="M16 0h8v16h-8z"/></svg>',
+  ru: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><path fill="#fff" d="M0 0h24v16H0z"/><path fill="#0039a6" d="M0 5.33h24v5.34H0z"/><path fill="#d52b1e" d="M0 10.67h24V16H0z"/></svg>',
 };
 
 const LanguageFlag: FC<{ lang: Lang }> = ({ lang }) => (

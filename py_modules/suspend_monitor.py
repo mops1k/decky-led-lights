@@ -24,7 +24,7 @@ BUSCTL_COMMAND = (
 INHIBIT_COMMAND = (
     "systemd-inhibit",
     "--what=sleep",
-    "--who=Colores",
+    "--who=Led Lights",
     "--why=Stop lighting before sleep",
     "--mode=delay",
     "sh",
@@ -204,12 +204,12 @@ class SuspendMonitor:
                     self._sleeping = False
                     await self._arm_inhibitor()
                     self._last_error = None
-                    self._logger.info("Colores: native suspend monitor ready")
+                    self._logger.info("Led Lights: native suspend monitor ready")
                     await self._connection.wait_closed()
                 except asyncio.CancelledError:
                     raise
                 except Exception as error:
-                    self._warn_once("Colores: native suspend monitor failed: %s", error)
+                    self._warn_once("Led Lights: native suspend monitor failed: %s", error)
                 finally:
                     self._release_inhibitor()
                     self._disconnect()
@@ -237,7 +237,7 @@ class SuspendMonitor:
                     raise
                 except Exception as error:
                     self._logger.error(
-                        "Colores: failed to prepare lighting for suspend: %s", error
+                        "Led Lights: failed to prepare lighting for suspend: %s", error
                     )
                 finally:
                     self._release_inhibitor()
@@ -250,7 +250,7 @@ class SuspendMonitor:
                     raise
                 except Exception as error:
                     self._logger.warning(
-                        "Colores: could not re-arm suspend inhibitor: %s", error
+                        "Led Lights: could not re-arm suspend inhibitor: %s", error
                     )
                     self._disconnect()
             if self._resume_suspend:
@@ -260,7 +260,7 @@ class SuspendMonitor:
                     raise
                 except Exception as error:
                     self._logger.warning(
-                        "Colores: could not restore after suspend signal: %s", error
+                        "Led Lights: could not restore after suspend signal: %s", error
                     )
 
     async def _arm_inhibitor(self):
@@ -275,7 +275,7 @@ class SuspendMonitor:
             self._close_fd(fd)
         except OSError as error:
             self._logger.warning(
-                "Colores: could not release suspend inhibitor: %s", error
+                "Led Lights: could not release suspend inhibitor: %s", error
             )
 
     def _disconnect(self):

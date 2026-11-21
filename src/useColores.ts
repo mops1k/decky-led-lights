@@ -93,7 +93,7 @@ export function useColores() {
       setLoadError(false);
     } catch (e) {
       if (!stateSnapshotGate.current.isCurrent(token)) return;
-      console.error("Colores: getState failed", e);
+      console.error("Led Lights: getState failed", e);
       setLoadError(true);
     }
   }, [acceptStateSnapshot]);
@@ -138,7 +138,7 @@ export function useColores() {
       },
       onError: (_appKey, error) => {
         stateSnapshotGate.current.invalidate();
-        console.error("Colores: profile transition failed", error);
+        console.error("Led Lights: profile transition failed", error);
         setProfileStatus("error");
       },
     });
@@ -192,7 +192,7 @@ export function useColores() {
           );
         }
       })
-      .catch((error) => console.error("Colores: profile write failed", error));
+      .catch((error) => console.error("Led Lights: profile write failed", error));
     profileWriteQueue.current = settled;
     return settled;
   }, []);
@@ -301,14 +301,14 @@ export function useColores() {
   const setChargerOnly = (chargerOnly: boolean) => {
     setState((s) => (s ? { ...s, chargerOnly } : s));
     api.setChargerOnly(chargerOnly).catch((e) =>
-      console.error("Colores: setChargerOnly failed", e),
+      console.error("Led Lights: setChargerOnly failed", e),
     );
   };
 
   const setSmartBrightness = (smartBrightness: boolean) => {
     setState((s) => (s ? { ...s, smartBrightness } : s));
     api.setSmartBrightness(smartBrightness).catch((e) =>
-      console.error("Colores: setSmartBrightness failed", e),
+      console.error("Led Lights: setSmartBrightness failed", e),
     );
   };
 
@@ -368,6 +368,13 @@ export function useColores() {
     });
   };
 
+  const setAmbilightLayout = (layout: string) => {
+    setState((s) => (s ? { ...s, ambilight: { ...s.ambilight, layout } } : s));
+    void pushProfile(snapshotProfileTarget(profileTarget.current), {
+      ambilight: { layout },
+    });
+  };
+
   const setAmbilightAudio = (audio: boolean) => {
     setState((s) => (s ? { ...s, ambilight: { ...s.ambilight, audio } } : s));
     void pushProfile(snapshotProfileTarget(profileTarget.current), {
@@ -379,7 +386,7 @@ export function useColores() {
     api
       .saveGradient(name, stops.map((c) => [c.r, c.g, c.b]))
       .then((savedGradients) => setState((s) => (s ? { ...s, savedGradients } : s)))
-      .catch((e) => console.error("Colores: saveGradient failed", e));
+      .catch((e) => console.error("Led Lights: saveGradient failed", e));
   };
 
   const deleteGradient = (name: string) => {
@@ -389,12 +396,12 @@ export function useColores() {
     api
       .deleteGradient(name)
       .then((savedGradients) => setState((s) => (s ? { ...s, savedGradients } : s)))
-      .catch((e) => console.error("Colores: deleteGradient failed", e));
+      .catch((e) => console.error("Led Lights: deleteGradient failed", e));
   };
 
   const setPowerLed = (off: boolean) => {
     setState((s) => (s ? { ...s, powerLedOff: off } : s));
-    api.setPowerLed(off).catch((e) => console.error("Colores: setPowerLed failed", e));
+    api.setPowerLed(off).catch((e) => console.error("Led Lights: setPowerLed failed", e));
   };
 
   const setPowerLedState = (powerLedState: "awake" | "suspend", off: boolean) => {
@@ -402,27 +409,27 @@ export function useColores() {
     setState((s) => (s ? { ...s, [key]: off } : s));
     api
       .setPowerLedState(powerLedState, off)
-      .catch((e) => console.error("Colores: setPowerLedState failed", e));
+      .catch((e) => console.error("Led Lights: setPowerLedState failed", e));
   };
 
   const setSleepChargingIndicator = (sleepChargingIndicator: boolean) => {
     setState((s) => (s ? { ...s, sleepChargingIndicator } : s));
     api.setSleepChargingIndicator(sleepChargingIndicator).catch((e) =>
-      console.error("Colores: setSleepChargingIndicator failed", e),
+      console.error("Led Lights: setSleepChargingIndicator failed", e),
     );
   };
 
   const setForceControl = (forceControl: boolean) => {
     setState((s) => (s ? { ...s, forceControl } : s));
     api.setForceControl(forceControl).catch((e) =>
-      console.error("Colores: setForceControl failed", e),
+      console.error("Led Lights: setForceControl failed", e),
     );
   };
 
   const setRememberStartup = (rememberStartup: boolean) => {
     setState((s) => (s ? { ...s, rememberStartup } : s));
     api.setRememberStartup(rememberStartup).catch((e) =>
-      console.error("Colores: setRememberStartup failed", e),
+      console.error("Led Lights: setRememberStartup failed", e),
     );
   };
 
@@ -461,14 +468,14 @@ export function useColores() {
     api
       .setExperiment(feature, on)
       .then(refreshState)
-      .catch((e) => console.error("Colores: setExperiment failed", e));
+      .catch((e) => console.error("Led Lights: setExperiment failed", e));
   };
 
   const reconnect = () =>
     api
       .reconnect()
       .then(refreshState)
-      .catch((e) => console.error("Colores: reconnect failed", e));
+      .catch((e) => console.error("Led Lights: reconnect failed", e));
 
   return {
     state,
@@ -495,6 +502,7 @@ export function useColores() {
     setEffectGradient,
     setAmbilight,
     setAmbilightSampling,
+    setAmbilightLayout,
     setAmbilightAudio,
     saveGradient,
     deleteGradient,

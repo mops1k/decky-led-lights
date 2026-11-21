@@ -75,6 +75,29 @@ const CATALOG: Record<Lang, UpdaterStrings> = {
     },
     availableTitle: "Update available",
   },
+  ru: {
+    floating: { title: "Доступна новая версия", update: "Обновить", later: "Позже" },
+    panel: {
+      version: "Версия",
+      latest: "(последняя)",
+      newPrefix: "новая",
+      checking: "проверка…",
+      check: "Проверить обновления",
+      update: "Что нового и установить",
+      error: "Не удалось проверить. Проверьте соединение.",
+    },
+    modal: {
+      title: "Что нового",
+      noNotes: "Для этого релиза нет заметок.",
+      install: "Установить обновление",
+      installing: "Установка…",
+      installed: "Обновление установлено.",
+      restartNote: "Перезапустите Decky, чтобы применить.",
+      restart: "Перезапустить Decky",
+      failed: "Установка не удалась. Попробуйте снова.",
+    },
+    availableTitle: "Доступно обновление",
+  },
   it: {
     floating: { title: "Nuova versione disponibile", update: "Aggiorna", later: "Più tardi" },
     panel: {

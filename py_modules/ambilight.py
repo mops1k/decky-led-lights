@@ -30,6 +30,15 @@ MAX_RETRY_INTERVAL = 30.0
 STABLE_STREAM_S = 60.0
 HELPER_FPS = 30
 HELPER_NO_LIBPIPEWIRE = 3
+# kwin_capture.py reads the desktop through KWin's ScreenShot2 D-Bus API, which is
+# the only source that exists outside Game Mode (there is no gamescope to tap).
+KWIN_CAPTURE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kwin_capture.py")
+KWIN_NO_SERVICE = 4
+KWIN_NO_PYGOBJECT = 5
+# Full-screen D-Bus captures are far heavier than a GPU-scaled gamescope frame, so the
+# desktop path is capped instead of following the device render rate.
+KWIN_MAX_FPS = 15
+_GAMESCOPE_COMMS = (b"gamescope", b"steamcompmgr")
 
 _FULL_REGION = [0.0, 0.0, 1.0, 1.0]
 
@@ -56,6 +65,25 @@ def host_capture_python(root="/"):
 
 def _helper_python():
     return host_capture_python()
+
+
+def gamescope_running(proc_root="/proc"):
+    """True when a gamescope compositor is up, i.e. the machine is in Game Mode."""
+    try:
+        entries = os.listdir(proc_root)
+    except OSError:
+        return False
+    for entry in entries:
+        if not entry.isdigit():
+            continue
+        try:
+            with open(os.path.join(proc_root, entry, "comm"), "rb") as handle:
+                name = handle.read().strip()
+        except OSError:
+            continue
+        if name in _GAMESCOPE_COMMS:
+            return True
+    return False
 
 
 def capture_available():
@@ -162,6 +190,22 @@ def _fall_back_to_gst():
     return _backend
 
 
+def _fall_back_to_pipewire():
+    global _backend
+    python = _helper_python()
+    _backend = ("pipewire", python) if python else ("gst", None)
+    logger.warning("ambilight desktop capture unavailable; using %s", _backend[0])
+    return _backend
+
+
+def _fall_back_to_kwin():
+    global _backend
+    python = _helper_python()
+    _backend = ("kwin", python) if python else ("gst", None)
+    logger.info("ambilight desktop capture available; using %s", _backend[0])
+    return _backend
+
+
 def retry_delay(drops):
     return min(MAX_RETRY_INTERVAL, RETRY_INTERVAL * (2 ** max(0, drops - 1)))
 
@@ -193,6 +237,7 @@ class Ambilight:
         self._task = None
         self._proc = None
         self._options = {}
+        self._kwin_failed = False
         self.status = "idle"
         self._current = [(0, 0, 0)] * self._zones
         self._targets = [(0, 0, 0)] * self._zones
@@ -286,15 +331,31 @@ class Ambilight:
         global _backend
         if _backend is None:
             python = _helper_python()
-            _backend = ("pipewire", python) if python else ("gst", None)
+            if python and not gamescope_running():
+                _backend = ("kwin", python)
+            elif python:
+                _backend = ("pipewire", python)
+            else:
+                _backend = ("gst", None)
             logger.info("ambilight capture backend: %s", _backend[0])
         return _backend
 
+    @staticmethod
+    def layout_signature(layout):
+        return tuple(
+            (group.get("name"), tuple(group.get("region", ())), tuple(group.get("zones", ())))
+            for group in (layout or ())
+        )
+
     def start(self, options):
-        self._options = options or {}
-        if self.running:
+        options = options or {}
+        layout = options.get("layout") or self._layout
+        if self.running and self.layout_signature(layout) == self.layout_signature(self._layout):
+            self._options = options
             return
         self.stop()
+        self._options = options
+        self._layout = [dict(group) for group in layout]
         self._box_tracker = ContentBoxTracker()
         self._task = asyncio.get_event_loop().create_task(self._run())
 
@@ -323,16 +384,29 @@ class Ambilight:
             self._proc = None
 
     async def _run(self):
-        # Outer reconnect loop: keep trying to find the gamescope source and capture it
-        # until stop() cancels us. The source can be absent at boot (session not up yet)
-        # or vanish (leaving Game Mode) and reappear — we recover from both automatically.
+        # Outer reconnect loop: keep trying to find a screen source (gamescope in Game
+        # Mode, KWin in the desktop) and capture it until stop() cancels us. The source
+        # can be absent at boot or vanish when the session type changes, so both paths
+        # are re-entered from here.
         frame_bytes = CAP_W * CAP_H * 3
         backend, python = await self._select_backend()
         drops = 0
         while True:
-            if backend == "pipewire":
+            if backend == "kwin":
+                command = [
+                    python, KWIN_CAPTURE,
+                    str(CAP_W), str(CAP_H), str(self._kwin_fps()),
+                ]
+                node = "kwin"
+            elif backend == "pipewire":
                 node = await self._pipewire_target()
                 if node is None:
+                    if not gamescope_running():
+                        # Left Game Mode for the desktop: gamescope is gone, so even the
+                        # desktop source that failed earlier deserves another try.
+                        self._kwin_failed = False
+                        backend, python = _fall_back_to_kwin()
+                        continue
                     logger.warning("main gamescope PipeWire node not found; retrying")
                     self.status = "no_source"
                     self._apply(self._fallback())
@@ -381,6 +455,9 @@ class Ambilight:
                 await self._log_exit(proc)
                 if backend == "pipewire" and proc.returncode == HELPER_NO_LIBPIPEWIRE:
                     backend, python = _fall_back_to_gst()
+                elif backend == "kwin" and proc.returncode in (KWIN_NO_SERVICE, KWIN_NO_PYGOBJECT):
+                    self._kwin_failed = True
+                    backend, python = _fall_back_to_pipewire()
                 self._apply(self._fallback())
             except asyncio.CancelledError:
                 raise
@@ -435,6 +512,10 @@ class Ambilight:
             for sub, zone in zip(subdivide(region, len(indices)), indices):
                 if 0 <= zone < self._zones:
                     self._targets[zone] = boost_saturation(self._sample(frame, box, sub), sat)
+
+    def _kwin_fps(self):
+        cap = KWIN_MAX_FPS if self._max_fps is None else min(KWIN_MAX_FPS, int(self._max_fps))
+        return max(1, cap)
 
     def _helper_fps(self):
         # Fixed so option changes never reconnect; the loop throttles to the chosen fps.

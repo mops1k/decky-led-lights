@@ -52,6 +52,7 @@ def test_shape_no_matching_asset(monkeypatch):
 
 
 def test_check_shapes_release(monkeypatch):
+    monkeypatch.setattr(updater, "_SELF_UPDATE_ENABLED", True)
     monkeypatch.setattr(updater, "_cache", None)
     monkeypatch.setattr(updater, "read_version", lambda: "0.14.0")
     monkeypatch.setattr(updater, "_repo_slug", lambda: "decky-colores")
@@ -69,6 +70,7 @@ def test_check_shapes_release(monkeypatch):
 
 
 def test_check_network_error(monkeypatch):
+    monkeypatch.setattr(updater, "_SELF_UPDATE_ENABLED", True)
     monkeypatch.setattr(updater, "_cache", None)
     monkeypatch.setattr(updater, "read_version", lambda: "0.14.0")
     monkeypatch.setattr(updater, "_repo_slug", lambda: "decky-colores")
@@ -135,3 +137,17 @@ def test_check_404_is_benign(monkeypatch):
     assert result["error"] == ""
     assert result["has_update"] is False
     assert result["latest"] == "0.14.0"
+
+
+def test_the_fork_never_checks_upstream_releases(monkeypatch):
+    monkeypatch.setattr(updater, "_cache", None)
+    monkeypatch.setattr(updater, "read_version", lambda: "0.35.1-edge.1")
+
+    def boom(*args, **kwargs):
+        raise AssertionError("network used")
+
+    monkeypatch.setattr(updater, "_http_get", boom)
+    result = updater.check(force=True)
+    assert result["has_update"] is False
+    assert result["error"] == ""
+    assert updater.install() == {"ok": False, "needs_restart": False, "message": "disabled"}

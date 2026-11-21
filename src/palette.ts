@@ -371,6 +371,10 @@ const NAME_PARTS: Record<Lang, { adjectives: string[]; nouns: string[] }> = {
     adjectives: ["Drunken", "Electric", "Cosmic", "Disco", "Pastel", "Neon", "Wild", "Turbo", "Mystic", "Spicy"],
     nouns: ["Sunset", "Unicorn", "Mango", "Octopus", "Thunder", "Cat", "Dragon", "Flamingo", "Toucan", "Cactus"],
   },
+  ru: {
+    adjectives: ["Электрический", "Космический", "Диско", "Пастельный", "Неоновый", "Дикий", "Турбо", "Мистический", "Пряный", "Сонный"],
+    nouns: ["Закат", "Единорог", "Манго", "Осьминог", "Гром", "Кот", "Дракон", "Фламинго", "Тукан", "Кактус"],
+  },
   it: {
     adjectives: ["elettrico", "cosmico", "disco", "pastello", "neon", "selvaggio", "turbo", "mistico", "piccante", "sognante"],
     nouns: ["Tramonto", "Unicorno", "Mango", "Polpo", "Tuono", "Gatto", "Drago", "Fenicottero", "Tucano", "Cactus"],

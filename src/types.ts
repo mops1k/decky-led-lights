@@ -81,6 +81,7 @@ export interface AmbilightState {
   smoothing: number;
   fps: number;
   sampling: string;
+  layout?: string;
   audio?: boolean;
 }
 

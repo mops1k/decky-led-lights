@@ -67,6 +67,85 @@ def region_color(frame, width, x0, y0, x1, y1):
     return tuple(min(255, (value * mean_peak + color_peak // 2) // color_peak) for value in color)
 
 
+EDGE_BAND = 0.10
+# Screen border slices for the four LEDs around a stick ring, top to bottom.
+_EDGE_SLICES = ((0.02, 0.26), (0.26, 0.50), (0.50, 0.74), (0.74, 0.98))
+
+
+def edge_layout(zones):
+    """Edge ambilight layout: every LED reads the screen border next to it.
+
+    The MSI Claw family has nine zones: 0-3 around the right stick, 4-7 around the
+    left stick and 8 on the ABXY buttons, so the ring LEDs map to the matching side
+    of the screen and the button zone reads the bottom edge. Any other zone count
+    falls back to an even ring around the four screen borders.
+    """
+    zones = int(zones)
+    if zones <= 0:
+        return []
+    if zones == 9:
+        layout = []
+        for index, (y0, y1) in enumerate(_EDGE_SLICES):
+            layout.append(
+                {
+                    "name": "Left stick",
+                    "region": [0.0, y0, EDGE_BAND, y1],
+                    "zones": [4 + index],
+                }
+            )
+        for index, (y0, y1) in enumerate(_EDGE_SLICES):
+            layout.append(
+                {
+                    "name": "Right stick",
+                    "region": [1.0 - EDGE_BAND, y0, 1.0, y1],
+                    "zones": [index],
+                }
+            )
+        layout.append(
+            {
+                "name": "Lights",
+                "region": [0.30, 1.0 - EDGE_BAND, 0.70, 1.0],
+                "zones": [8],
+            }
+        )
+        return layout
+    return [
+        {"name": "Lights", "region": list(region), "zones": [index]}
+        for index, region in enumerate(_perimeter_regions(zones))
+    ]
+
+
+def _perimeter_regions(count):
+    # Even ring: the borders are split into four runs and every zone reads a slice
+    # of the run it lands on, starting at the top edge and going clockwise.
+    shares = []
+    remaining = count
+    for index in range(4):
+        share = remaining // (4 - index)
+        shares.append(share)
+        remaining -= share
+    sides = ("top", "right", "bottom", "left")
+    regions = []
+    for side, share in zip(sides, shares):
+        for start, end in _split(share):
+            if side == "top":
+                regions.append([start, 0.0, end, EDGE_BAND])
+            elif side == "right":
+                regions.append([1.0 - EDGE_BAND, start, 1.0, end])
+            elif side == "bottom":
+                regions.append([start, 1.0 - EDGE_BAND, end, 1.0])
+            else:
+                regions.append([0.0, start, EDGE_BAND, end])
+    return regions
+
+
+def _split(count, lo=0.0, hi=1.0):
+    if count <= 0:
+        return []
+    step = (hi - lo) / count
+    return [(lo + index * step, lo + (index + 1) * step) for index in range(count)]
+
+
 def region_pixels(box, region):
     left, top, right, bottom = box
     x0, y0, x1, y1 = region

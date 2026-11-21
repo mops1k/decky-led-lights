@@ -23,9 +23,9 @@ export const it: Record<string, string> = {
   "chargerOnly.hint": "Le luci si accendono solo quando l'alimentatore è collegato.",
   "startup.remember": "Ricorda all'avvio",
   "startup.remember.hint":
-    "Quando imposti un colore, Colores lo salva e lo usa all'avvio. Disattiva questa opzione per restituire a SteamOS il controllo della barra al riavvio.",
-  "forceControl.label": "Dai priorità a Colores",
-  "forceControl.hint": "Colores riprende il controllo delle luci ogni volta che lo apri.",
+    "Quando imposti un colore, Led Lights lo salva e lo usa all'avvio. Disattiva questa opzione per restituire a SteamOS il controllo della barra al riavvio.",
+  "forceControl.label": "Dai priorità a Led Lights",
+  "forceControl.hint": "Led Lights riprende il controllo delle luci ogni volta che lo apri.",
   "forceControl.notice":
     "Per evitare conflitti, disattiva il controllo RGB di HHD o di altri moduli che gestiscono le luci.",
   "reconnect.label": "Riconnetti i controller",
@@ -131,12 +131,15 @@ export const it: Record<string, string> = {
   "effect.spiral.firmwareNote": "Effetto rotante integrato nel firmware di Legion Go.",
 
   "ambient.gameModeBanner":
-    "Non c’è ancora una schermata da acquisire. Ambilight funziona in modalità Gioco quando è aperto un gioco, non in modalità Desktop né in Big Picture.",
+    "Non c’è ancora una schermata da acquisire. In modalità Desktop viene acquisito lo schermo attivo, in modalità Gioco il gioco in esecuzione.",
   "ambient.stickHint":
     "Le luci seguono le zone dello schermo vicine a ciascuno stick: a sinistra campionano l'area in alto a sinistra, a destra l'area centrale destra.",
   "ambient.globalHint": "Le luci seguono il colore medio dell'intero schermo.",
   "ambient.sampling.columns": "Colonne",
   "ambient.sampling.bottom_edge": "Bordo inferiore",
+  "ambient.layout.sticks": "Stick",
+  "ambient.layout.edge": "Bordi dello schermo",
+  "ambient.edgeHint": "Ogni LED prende il colore dal bordo più vicino: le zone a sinistra leggono il bordo sinistro, quelle a destra il destro e ABXY il bordo inferiore.",
   "ambient.vividness": "Vividezza",
   "ambient.smoothing": "Fluidità",
   "ambient.captureRate": "Frequenza di acquisizione",
@@ -259,14 +262,14 @@ export const it: Record<string, string> = {
 
   "report.button": "Invia una segnalazione",
   "report.button.desc":
-    "Qualcosa non funziona o vorresti una nuova funzione in Colores? Raccontamelo e includerò anche il contesto tecnico delle luci.",
+    "Qualcosa non funziona o vorresti una nuova funzione in Led Lights? Raccontamelo e includerò anche il contesto tecnico delle luci.",
   "report.unvalidated.note":
     "Non ho ancora accesso fisico a questo dispositivo. Sto facendo del mio meglio per supportarlo e le tue segnalazioni mi aiutano moltissimo a perfezionare le luci.",
   "report.title": "Invia una segnalazione",
   "report.intro":
     "Indica cosa non funziona e dimmi cosa hai notato. Le informazioni tecniche sulle luci vengono raccolte automaticamente.",
   "report.intro.feature":
-    "Questa non è una segnalazione di errore. Dimmi cosa vorresti aggiungere o migliorare in Colores; raccoglierò anche il contesto tecnico delle luci.",
+    "Questa non è una segnalazione di errore. Dimmi cosa vorresti aggiungere o migliorare in Led Lights; raccoglierò anche il contesto tecnico delle luci.",
   "report.section.kind": "Cosa vuoi inviare?",
   "report.kind.bug": "Un problema",
   "report.kind.feature": "Una richiesta o idea",

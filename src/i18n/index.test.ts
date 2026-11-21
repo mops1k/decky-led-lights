@@ -67,29 +67,38 @@ describe("Every supported translation catalog", () => {
     }
   });
 
-  it.each(CATALOGS)("%s avoids em dashes in interface copy", (_lang, catalog) => {
-    expect(Object.values(catalog).some((value) => value.includes("—"))).toBe(false);
+  it.each(CATALOGS.filter(([lang]) => lang !== "ru"))(
+    "%s avoids em dashes in interface copy",
+    (_lang, catalog) => {
+      expect(Object.values(catalog).some((value) => value.includes("—"))).toBe(false);
+    },
+  );
+
+  it("uses Russian long dashes instead of em dashes pasted from other catalogs", () => {
+    const russian = i18n.DICTS.ru;
+    expect(russian["ambient.edgeHint"]).toContain("—");
+    expect(Object.values(russian).join("\n")).not.toMatch(/\s--\s/);
   });
 
   it("keeps reviewed wording natural in every language", () => {
     expect(i18n.DICTS).toMatchObject({
       es: {
-        "forceControl.hint": "Recupera el control de las luces al abrir Colores.",
+        "forceControl.hint": "Recupera el control de las luces al abrir Led Lights.",
         "performance.hint": "Las luces se llenan como una barra según la carga de la GPU, de verde a rojo.",
         "experimental.description": "Estas funciones no se han verificado en este dispositivo. Puedes probarlas, pero puede que aún no funcionen bien. Estoy trabajando para añadir compatibilidad.",
       },
       en: {
-        "forceControl.hint": "Reclaims the lights whenever you open Colores.",
+        "forceControl.hint": "Reclaims the lights whenever you open Led Lights.",
         "performance.hint": "The lights fill like a bar with GPU load, from green to red.",
         "experimental.description": "These features have not been verified on this device. You can try them, but they may not work correctly yet. I'm still working on support for this device.",
       },
       it: {
-        "forceControl.hint": "Colores riprende il controllo delle luci ogni volta che lo apri.",
+        "forceControl.hint": "Led Lights riprende il controllo delle luci ogni volta che lo apri.",
         "performance.hint": "Le luci si riempiono come una barra in base al carico della GPU, dal verde al rosso.",
         "experimental.description": "Queste funzioni non sono state verificate su questo dispositivo. Puoi provarle, ma potrebbero non funzionare correttamente. Sto lavorando per aggiungere il supporto.",
       },
       de: {
-        "forceControl.hint": "Colores übernimmt beim Öffnen erneut die Kontrolle über die Beleuchtung.",
+        "forceControl.hint": "Led Lights übernimmt beim Öffnen erneut die Kontrolle über die Beleuchtung.",
         "performance.hint": "Die Beleuchtung füllt sich je nach GPU-Auslastung wie eine Leiste von Grün bis Rot.",
         "experimental.description": "Diese Funktionen wurden auf diesem Gerät noch nicht geprüft. Du kannst sie ausprobieren, möglicherweise funktionieren sie aber noch nicht richtig. Ich arbeite noch an der Unterstützung für dieses Gerät.",
       },
@@ -100,9 +109,9 @@ describe("Every supported translation catalog", () => {
 describe("Italian catalog", () => {
   it("keeps the product name and established technical terms unchanged", () => {
     const italian = italianCatalog();
-    for (const lang of ["es", "en", "it"] as const) {
-      expect(i18n.DICTS[lang]["forceControl.label"]).toContain("Colores");
-      expect(i18n.DICTS[lang]["forceControl.hint"]).toContain("Colores");
+    for (const lang of ["es", "en", "ru", "it"] as const) {
+      expect(i18n.DICTS[lang]["forceControl.label"]).toContain("Led Lights");
+      expect(i18n.DICTS[lang]["forceControl.hint"]).toContain("Led Lights");
     }
     expect(italian["forceControl.notice"]).toContain("RGB");
     expect(italian["startup.remember.hint"]).toContain("SteamOS");
@@ -111,7 +120,7 @@ describe("Italian catalog", () => {
 
   it("hands startup control back to SteamOS in natural Italian", () => {
     expect(italianCatalog()["startup.remember.hint"]).toBe(
-      "Quando imposti un colore, Colores lo salva e lo usa all'avvio. Disattiva questa opzione per restituire a SteamOS il controllo della barra al riavvio.",
+      "Quando imposti un colore, Led Lights lo salva e lo usa all'avvio. Disattiva questa opzione per restituire a SteamOS il controllo della barra al riavvio.",
     );
   });
 
@@ -125,7 +134,7 @@ describe("Italian catalog", () => {
 
   it("describes Ambilight capture in natural Italian", () => {
     expect(italianCatalog()["ambient.gameModeBanner"]).toBe(
-      "Non c’è ancora una schermata da acquisire. Ambilight funziona in modalità Gioco quando è aperto un gioco, non in modalità Desktop né in Big Picture.",
+      "Non c’è ancora una schermata da acquisire. In modalità Desktop viene acquisito lo schermo attivo, in modalità Gioco il gioco in esecuzione.",
     );
   });
 
@@ -144,7 +153,7 @@ describe("Italian catalog", () => {
 describe("German catalog", () => {
   it("keeps product and technical terms unchanged", () => {
     const german = germanCatalog();
-    expect(german["forceControl.label"]).toContain("Colores");
+    expect(german["forceControl.label"]).toContain("Led Lights");
     expect(german["forceControl.notice"]).toContain("RGB");
     expect(german["startup.remember.hint"]).toContain("SteamOS");
     expect(german["performance.hint"]).toContain("GPU");
@@ -152,10 +161,10 @@ describe("German catalog", () => {
 
   it("uses natural German wording on key user journeys", () => {
     expect(germanCatalog()).toMatchObject({
-      "startup.remember.hint": "Wenn du eine Farbe festlegst, speichert Colores sie und verwendet sie beim Start. Deaktiviere diese Option, damit SteamOS nach einem Neustart wieder die Beleuchtung steuert.",
+      "startup.remember.hint": "Wenn du eine Farbe festlegst, speichert Led Lights sie und verwendet sie beim Start. Deaktiviere diese Option, damit SteamOS nach einem Neustart wieder die Beleuchtung steuert.",
       "customize.accent": "Primärfarbe",
       "saved.namePlaceholder": "Gib einen Namen ein",
-      "ambient.gameModeBanner": "Noch ist kein Bild zum Erfassen vorhanden. Ambilight funktioniert im Spielemodus, sobald ein Spiel läuft, nicht im Desktopmodus oder in Big Picture.",
+      "ambient.gameModeBanner": "Noch kein Bild zu lesen. Im Desktop-Modus wird der aktive Bildschirm erfasst, im Spielmodus das laufende Spiel.",
       "effect.breathing.label": "Pulsieren",
       "effect.spiral.firmwareNote": "Der in deiner Legion Go integrierte Dreheffekt der Firmware.",
       "battery.breathe.label": "Beim Laden pulsieren",
@@ -176,8 +185,8 @@ describe("Brazilian Portuguese catalog", () => {
 
     expect(portuguese).toMatchObject({
       "settings.language": "Idioma",
-      "startup.remember.hint": "Ao definir uma cor, o Colores a salva e a aplica na inicialização. Desative esta opção para devolver o controle da barra ao SteamOS após reiniciar.",
-      "forceControl.hint": "O Colores retoma o controle das luzes sempre que você o abre.",
+      "startup.remember.hint": "Ao definir uma cor, o Led Lights a salva e a aplica na inicialização. Desative esta opção para devolver o controle da barra ao SteamOS após reiniciar.",
+      "forceControl.hint": "O Led Lights retoma o controle das luzes sempre que você o abre.",
       "performance.hint": "As luzes se preenchem como uma barra de acordo com o uso da GPU, do verde ao vermelho.",
       "experimental.description": "Estes recursos ainda não foram verificados neste dispositivo. Você pode testá-los, mas talvez ainda não funcionem corretamente. Estou trabalhando para oferecer suporte.",
     });
@@ -196,8 +205,8 @@ describe("French catalog", () => {
 
     expect(french).toMatchObject({
       "settings.language": "Langue",
-      "forceControl.label": "Prioriser Colores",
-      "forceControl.hint": "Colores reprend le contrôle de l'éclairage à chaque ouverture.",
+      "forceControl.label": "Prioriser Led Lights",
+      "forceControl.hint": "Led Lights reprend le contrôle de l'éclairage à chaque ouverture.",
       "performance.hint": "Les LED se remplissent comme une jauge selon la charge du GPU, du vert au rouge.",
     });
     expect(french["forceControl.notice"]).toContain("RGB");
@@ -231,12 +240,12 @@ describe("Language persistence", () => {
     expect(i18n.readInitialLang()).toBe(lang);
   });
 
-  it("keeps Spanish as the safe fallback", () => {
+  it("keeps English as the safe fallback", () => {
     vi.stubGlobal("localStorage", {
       getItem: vi.fn(() => "unsupported"),
       setItem: vi.fn(),
     });
-    expect(i18n.readInitialLang()).toBe("es");
+    expect(i18n.readInitialLang()).toBe("en");
 
     vi.stubGlobal("localStorage", {
       getItem: vi.fn(() => {
@@ -244,7 +253,7 @@ describe("Language persistence", () => {
       }),
       setItem: vi.fn(),
     });
-    expect(i18n.readInitialLang()).toBe("es");
+    expect(i18n.readInitialLang()).toBe("en");
   });
 });
 
@@ -267,6 +276,7 @@ describe("Language selector", () => {
     expect(selector.rgOptions.map((option) => option.data)).toEqual([
       "es",
       "en",
+      "ru",
       "it",
       "de",
       "pt-BR",
@@ -278,6 +288,7 @@ describe("Language selector", () => {
     expect(renderedLabels).toEqual([
       expect.stringContaining("Español"),
       expect.stringContaining("English"),
+      expect.stringContaining("Русский"),
       expect.stringContaining("Italiano"),
       expect.stringContaining("Deutsch"),
       expect.stringContaining("Português (Brasil)"),
@@ -294,6 +305,7 @@ describe("Language selector", () => {
     expect(setItem.mock.calls).toEqual([
       ["colores-lang", "es"],
       ["colores-lang", "en"],
+      ["colores-lang", "ru"],
       ["colores-lang", "it"],
       ["colores-lang", "de"],
       ["colores-lang", "pt-BR"],

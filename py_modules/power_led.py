@@ -1,6 +1,6 @@
 """Power-button ring LED control for Lenovo Legion handhelds.
 
-The power-button LED is not an RGB LED on the HID/sysfs path Colores uses for the
+The power-button LED is not an RGB LED on the HID/sysfs path Led Lights uses for the
 joystick rings. It is a single Embedded Controller (EC) bit. The firmware method
 `\\_SB.GZFD.WMAF` (reverse-engineered from each device's DSDT) only writes that bit, and
 on Bazzite's current kernel `acpi_call` is unavailable, so we write the EC directly via

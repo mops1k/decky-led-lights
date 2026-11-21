@@ -161,7 +161,7 @@ def export_document(styles):
 
 def import_document(document):
     if not isinstance(document, dict) or document.get("format") != FORMAT:
-        raise ValueError("not a Colores styles file")
+        raise ValueError("not a Led Lights styles file")
     version = document.get("version")
     if isinstance(version, bool) or not isinstance(version, int) or not 1 <= version <= VERSION:
         raise ValueError("unsupported styles version")

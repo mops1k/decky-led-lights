@@ -1,5 +1,6 @@
 import os
 
+from ambient_sampling import edge_layout
 from device_profiles import profile_for_discovered_adapter, profile_for_hid_signatures, resolve_profile_match
 from led_device import (
     ApexRgbDevice,
@@ -92,6 +93,8 @@ def build_layout(zones, swap_sticks=False, layout_kind="rings"):
         return [{"name": "Bar", "region": [0.0, 0.0, 1.0, 1.0], "zones": list(range(zones)), "kind": "bar"}]
     if layout_kind == "uniform":
         return [{"name": "Lights", "region": [0.0, 0.0, 1.0, 1.0], "zones": list(range(zones)), "kind": "uniform"}]
+    if layout_kind == "edge":
+        return edge_layout(zones)
     if zones == 1:
         return [{"name": "Lights", "region": [0.0, 0.0, 1.0, 1.0], "zones": [0]}]
     groups = list(reversed(_STICK_ANCHORS)) if swap_sticks else _STICK_ANCHORS

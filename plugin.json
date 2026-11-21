@@ -1,11 +1,19 @@
 {
-  "name": "Colores",
-  "author": "Hooandee",
-  "flags": ["root", "_root"],
+  "name": "Led Lights",
+  "author": "mops1k (fork of Hooandee)",
+  "flags": [
+    "root",
+    "_root"
+  ],
   "api_version": 1,
   "publish": {
-    "tags": ["root", "rgb", "led"],
-    "description": "Beautiful RGB LED control for handheld gaming PCs.",
+    "tags": [
+      "root",
+      "rgb",
+      "led",
+      "ambilight"
+    ],
+    "description": "RGB LED control with TV-style edge ambilight for handheld gaming PCs (fork of Colores).",
     "image": "https://opengraph.githubassets.com/1/Hooandee/decky-colores"
   }
 }

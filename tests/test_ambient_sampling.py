@@ -73,3 +73,39 @@ def test_tracker_grows_back_even_when_the_bigger_detections_flicker():
     for index in range(RELEASE_FRAMES):
         tracker.update((0, 0, 10, 10) if index % 2 == 0 else (0, 1, 10, 9))
     assert tracker.box != (0, 2, 10, 8)
+
+
+def test_edge_layout_puts_the_stick_rings_on_their_screen_borders():
+    from ambient_sampling import EDGE_BAND, edge_layout
+
+    layout = edge_layout(9)
+    by_zone = {zone: group for group in layout for zone in group["zones"]}
+    assert sorted(by_zone) == list(range(9))
+
+    right = [by_zone[zone]["region"] for zone in (0, 1, 2, 3)]
+    assert all(region[0] == pytest.approx(1.0 - EDGE_BAND) for region in right)
+    assert all(region[2] == pytest.approx(1.0) for region in right)
+    assert [region[1] for region in right] == sorted(region[1] for region in right)
+
+    left = [by_zone[zone]["region"] for zone in (4, 5, 6, 7)]
+    assert all(region[0] == pytest.approx(0.0) for region in left)
+    assert all(region[2] == pytest.approx(EDGE_BAND) for region in left)
+    assert [region[1] for region in left] == sorted(region[1] for region in left)
+
+    buttons = by_zone[8]["region"]
+    assert buttons[1] == pytest.approx(1.0 - EDGE_BAND)
+    assert buttons[3] == pytest.approx(1.0)
+    assert buttons[0] < buttons[2]
+
+
+def test_edge_layout_covers_every_zone_once_for_other_devices():
+    from ambient_sampling import edge_layout
+
+    for zones in (2, 4, 6, 8):
+        layout = edge_layout(zones)
+        covered = sorted(zone for group in layout for zone in group["zones"])
+        assert covered == list(range(zones))
+        for group in layout:
+            x0, y0, x1, y1 = group["region"]
+            assert 0.0 <= x0 < x1 <= 1.0
+            assert 0.0 <= y0 < y1 <= 1.0

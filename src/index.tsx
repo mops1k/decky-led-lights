@@ -573,6 +573,7 @@ function Content() {
     setEffectGradient,
     setAmbilight,
     setAmbilightSampling,
+    setAmbilightLayout,
     setAmbilightAudio,
     saveGradient,
     deleteGradient,
@@ -952,11 +953,31 @@ function Content() {
             )}
             <PanelSectionRow>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", padding: "4px 2px 12px", lineHeight: 1.45 }}>
-                {capabilities.perZone || capabilities.perControllerColor
-                  ? t("ambient.stickHint")
-                  : t("ambient.globalHint")}
+                {ambilight.layout === "edge"
+                  ? t("ambient.edgeHint")
+                  : capabilities.perZone || capabilities.perControllerColor
+                    ? t("ambient.stickHint")
+                    : t("ambient.globalHint")}
               </div>
             </PanelSectionRow>
+            {capabilities.perZone && (
+              <PanelSectionRow>
+                <div style={{ padding: "2px 0 10px" }}>
+                  <Tabs<string>
+                    value={ambilight.layout ?? "edge"}
+                    tabs={["sticks", "edge"]}
+                    onChange={setAmbilightLayout}
+                    label={(m) =>
+                      t(
+                        `ambient.layout.${m}` as
+                          | "ambient.layout.sticks"
+                          | "ambient.layout.edge",
+                      )
+                    }
+                  />
+                </div>
+              </PanelSectionRow>
+            )}
             {capabilities.layoutKind === "bar" && (
               <PanelSectionRow>
                 <div style={{ padding: "2px 0 10px" }}>
@@ -1284,8 +1305,8 @@ export default definePlugin(() => {
   const stopSuspendPreparation = startSuspendPreparation(prepareSuspend);
   const stopSteamDownloads = watchSteamDownloads(setSteamDownloadActive);
   return {
-    name: "Colores",
-    titleView: <div className={staticClasses?.Title}>Colores</div>,
+    name: "Led Lights",
+    titleView: <div className={staticClasses?.Title}>Led Lights</div>,
     content: (
       <ErrorBoundary>
         <I18nProvider>

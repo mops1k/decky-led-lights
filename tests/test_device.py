@@ -512,7 +512,12 @@ _OXP_LED_FILES = {
 }
 
 
-def test_build_device_oxp_uses_latch_device(tmp_path):
+def test_build_device_oxp_uses_latch_device(tmp_path, monkeypatch):
+    # Pin the sysfs path: when a host hidapi is present the HID probe would win.
+    import py_modules.device as device_module
+
+    monkeypatch.setattr(device_module, "HID_AVAILABLE", False)
+    monkeypatch.setattr(device_module, "discover_hid_drivers", lambda: set())
     root = str(tmp_path)
     _make_dmi(root, "ONEXPLAYER APEX", "ONEXPLAYER APEX")
     _make_led(root, "oxp:rgb:joystick_rings", _OXP_LED_FILES)

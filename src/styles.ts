@@ -34,7 +34,7 @@ export const deckyModeOf = (style: SavedStyle): string | null =>
 export const stylesForMode = (styles: SavedStyle[], mode: string): SavedStyle[] =>
   styles.filter((style) => deckyModeOf(style) === mode);
 
-export const STYLES_FOLDER_FALLBACK = "/home/deck/Documents/Colores";
+export const STYLES_FOLDER_FALLBACK = "/home/deck/Documents/Led Lights";
 export const STYLE_NAME_MAX = 40;
 
 export const styleSwatch = (style: SavedStyle): string => {

@@ -168,7 +168,7 @@ def test_collect_sends_the_last_day_whole_and_only_key_records_before(tmp_path):
     _run(
         j,
         (("INFO", "log", "frame stats"), {"at": now - 3 * DAY}),
-        (("INFO", "log", "Colores v1.0 on rog_ally"), {"at": now - 3 * DAY + 1}),
+        (("INFO", "log", "Led Lights v1.0 on rog_ally"), {"at": now - 3 * DAY + 1}),
         (("WARNING", "log", "hid write failed"), {"at": now - 2 * DAY}),
         (("INFO", "rpc", "set_mode"), {"at": now - 2 * DAY + 5, "a": '["effect"]'}),
         (("INFO", "state", "mode"), {"at": now - 2 * DAY + 6, "mode": "effect"}),
@@ -176,7 +176,7 @@ def test_collect_sends_the_last_day_whole_and_only_key_records_before(tmp_path):
     )
     bundle = collect(str(tmp_path), now=now)
     assert [r["m"] for r in bundle["older"]] == [
-        "Colores v1.0 on rog_ally", "hid write failed", "set_mode", "mode",
+        "Led Lights v1.0 on rog_ally", "hid write failed", "set_mode", "mode",
     ]
     assert [r["m"] for r in bundle["recent"]] == ["frame stats"]
     assert bundle["schema"] == 1 and bundle["files"]

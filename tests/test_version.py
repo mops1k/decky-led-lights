@@ -12,6 +12,7 @@ def test_read_version_matches_package_json():
 
 
 def test_read_version_is_semver_like():
-    parts = read_version().split(".")
+    # The fork carries a "-edge.N" suffix, so only the X.Y.Z core is checked.
+    parts = read_version().split("-")[0].split(".")
     assert len(parts) == 3
     assert all(p.isdigit() for p in parts)

@@ -1,7 +1,7 @@
 {
-  "name": "decky-colores",
-  "version": "0.35.1",
-  "description": "Beautiful RGB LED control for handheld gaming PCs.",
+  "name": "decky-led-lights",
+  "version": "1.0.0",
+  "description": "RGB LED control with TV-style edge ambilight for handheld gaming PCs (fork of decky-colores).",
   "type": "module",
   "scripts": {
     "build": "rollup -c --forceExit",
@@ -10,7 +10,7 @@
     "test:fe": "vitest run",
     "test:i18n": "vitest run src/i18n/index.test.ts src/updater/editorial.test.ts src/updater/italian.test.ts src/updater/german.test.ts src/updater/brazilianPortuguese.test.ts src/updater/french.test.ts"
   },
-  "author": "Hooandee",
+  "author": "mops1k (fork of Hooandee)",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",

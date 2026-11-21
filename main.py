@@ -9,7 +9,7 @@ import time
 import decky
 
 from version import read_version
-from device import build_device
+from device import build_device, build_layout
 from settings_store import SettingsStore
 from effects import (
     BATTERY_BANDS,
@@ -17,7 +17,7 @@ from effects import (
     EffectEngine,
     interpolate_gradient,
 )
-from lighting_profiles import LightingProfileStore
+from lighting_profiles import AMBILIGHT_LAYOUT_MODES, LightingProfileStore
 from ambilight import Ambilight, capture_available as ambilight_capture_available
 from audio import AudioReactive
 from power_supply import charger_online, battery_level
@@ -63,7 +63,14 @@ DEFAULTS = {
     "gradient": [[0, 196, 255], [136, 86, 255]],
     "gradient_speed": 30,
     "effect": {"id": "breathing", "speed": 50, "use_gradient": False},
-    "ambilight": {"vividness": 27, "smoothing": 75, "fps": 10, "sampling": "columns", "audio": False},
+    "ambilight": {
+        "vividness": 27,
+        "smoothing": 75,
+        "fps": 10,
+        "sampling": "columns",
+        "layout": "edge",
+        "audio": False,
+    },
     "saved_gradients": [],
     "styles": [],
     "enabled_experiments": [],
@@ -108,7 +115,7 @@ CALIBRATION_PREVIEW_TIMEOUT = 90.0
 AURORA_FLOOR = 0.25
 STYLES_FILE_LIMIT = 256 * 1024
 STYLES_FILE_NAME = "colores-estilos.json"
-STYLES_EXPORT_FOLDERS = ("Documents", "Colores")
+STYLES_EXPORT_FOLDERS = ("Documents", "Led Lights")
 
 STARTUP_PERSIST_DELAY = 1.0
 
@@ -241,6 +248,8 @@ def _normalize_ambilight_settings(settings: dict | None) -> dict:
         saturation = max(100, min(250, int(stored.get("saturation", 140))))
         vividness = round((saturation - 100) / 1.5)
     normalized["vividness"] = max(0, min(100, int(vividness)))
+    if normalized.get("layout") not in AMBILIGHT_LAYOUT_MODES:
+        normalized["layout"] = "edge"
     normalized.pop("saturation", None)
     return normalized
 
@@ -300,14 +309,14 @@ def _write_user_file(path: str, payload: str) -> None:
 
 def _read_styles_file(path: str) -> str:
     if not path.lower().endswith(".json"):
-        raise ValueError("not a Colores styles file")
+        raise ValueError("not a Led Lights styles file")
     try:
         handle = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except OSError as error:
-        raise ValueError("not a Colores styles file") from error
+        raise ValueError("not a Led Lights styles file") from error
     with os.fdopen(handle, "rb") as stream:
         if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
-            raise ValueError("not a Colores styles file")
+            raise ValueError("not a Led Lights styles file")
         data = stream.read(STYLES_FILE_LIMIT + 1)
     if len(data) > STYLES_FILE_LIMIT:
         raise ValueError("styles file too big")
@@ -440,7 +449,7 @@ class Plugin:
                 self._reprobe_device()
                 self._reapply_static()
         except Exception as error:
-            decky.logger.warning("Colores: acquire/reassert failed: %s", error)
+            decky.logger.warning("Led Lights: acquire/reassert failed: %s", error)
 
     async def _hid_watch(self) -> None:
         previous = hidraw_fingerprint()
@@ -458,12 +467,12 @@ class Plugin:
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: HID watch failed: %s", error)
+            decky.logger.warning("Led Lights: HID watch failed: %s", error)
 
     def _recover_after_hid_change(self) -> None:
         if self._stopping or getattr(self, "_suspend_prepared", False):
             return
-        decky.logger.info("Colores: HID devices changed; re-applying lighting")
+        decky.logger.info("Led Lights: HID devices changed; re-applying lighting")
         self._reprobe_device()
         if self._controller.available:
             self._controller.reconnect()
@@ -495,10 +504,10 @@ class Plugin:
             awake_ok = self._power_led.set_state("awake", awake)
             suspend_ok = self._power_led.set_state("suspend", suspend)
             if not (awake_ok and suspend_ok):
-                decky.logger.warning("Colores: separate power LED apply on load failed")
+                decky.logger.warning("Led Lights: separate power LED apply on load failed")
             return
         if self._settings.get("power_led_off", False) and not self._power_led.set(True):
-            decky.logger.warning("Colores: power LED apply on load failed")
+            decky.logger.warning("Led Lights: power LED apply on load failed")
 
     def _apply_sleep_charging_indicator(self) -> bool:
         if not self._capabilities.get("sleepChargingIndicator"):
@@ -510,7 +519,7 @@ class Plugin:
         if controller.set_sleep_charging_indicator(enabled):
             return True
         decky.logger.warning(
-            "Colores: sleep charging indicator write failed (enabled=%s)",
+            "Led Lights: sleep charging indicator write failed (enabled=%s)",
             enabled,
         )
         return False
@@ -549,7 +558,7 @@ class Plugin:
                 categories, text, home, hostname, report_kind
             )
         except Exception as e:  # noqa: BLE001
-            decky.logger.error("Colores: report bundle failed: %s", e)
+            decky.logger.error("Led Lights: report bundle failed: %s", e)
             bundle = report_collector.build_bundle(
                 app=_REPORT_APP, categories=categories, text=text,
                 environment={}, capabilities={}, state={}, stores={}, logs=[],
@@ -561,13 +570,13 @@ class Plugin:
             None, lambda: report_client.submit(_REPORT_SERVICE_URL, bundle)
         )
         if res.get("ok"):
-            decky.logger.info("Colores: report sent: %s", res.get("code"))
+            decky.logger.info("Led Lights: report sent: %s", res.get("code"))
             return {"ok": True, "code": res["code"], "issue_url": res.get("issue_url")}
         path = report_client.save_local(
             getattr(decky, "DECKY_PLUGIN_LOG_DIR", "."), bundle
         )
         decky.logger.warning(
-            "Colores: report send failed (%s); saved to %s", res.get("error"), path
+            "Led Lights: report send failed (%s); saved to %s", res.get("error"), path
         )
         return {"ok": False, "error": res.get("error", "unknown"), "saved_path": path}
 
@@ -1061,7 +1070,7 @@ class Plugin:
         try:
             document = json.loads(text)
         except (ValueError, RecursionError) as error:
-            raise ValueError("not a Colores styles file") from error
+            raise ValueError("not a Led Lights styles file") from error
         incoming, skipped = saved_styles.import_document(document)
         merged, added, replaced = saved_styles.merge_styles(self._styles(), incoming)
         self._store_styles(merged)
@@ -1076,7 +1085,7 @@ class Plugin:
     async def set_force_control(self, on: bool) -> None:
         self._init()
         if self._stopping:
-            decky.logger.warning("Colores: force-control change ignored during shutdown")
+            decky.logger.warning("Led Lights: force-control change ignored during shutdown")
             return
         self._settings["force_control"] = on
         self._persist_settings()
@@ -1108,7 +1117,7 @@ class Plugin:
             raise
         except Exception as error:
             decky.logger.warning(
-                "Colores: HHD RGB operation failed: %s", type(error).__name__
+                "Led Lights: HHD RGB operation failed: %s", type(error).__name__
             )
             return None
 
@@ -1120,10 +1129,10 @@ class Plugin:
                 return "stopping"
             current = await self._run_hhd_call(self._hhd_rgb.read_rgb)
             if current is None:
-                self._set_hhd_status("unavailable", decky.logger.warning, "Colores: HHD RGB state unavailable; continuing RGB reclaim")
+                self._set_hhd_status("unavailable", decky.logger.warning, "Led Lights: HHD RGB state unavailable; continuing RGB reclaim")
                 return "failed"
             if current is False:
-                self._set_hhd_status("disabled", decky.logger.info, "Colores: HHD RGB already disabled")
+                self._set_hhd_status("disabled", decky.logger.info, "Led Lights: HHD RGB already disabled")
                 return "unchanged"
             if self._settings.get("hhd_rgb_restore") is not True:
                 self._settings["hhd_rgb_restore"] = True
@@ -1131,9 +1140,9 @@ class Plugin:
             confirmed = await self._run_hhd_call(lambda: self._hhd_rgb.set_rgb(False))
             if confirmed is True:
                 self._hhd_rgb_status = "disabled"
-                decky.logger.info("Colores: HHD RGB disabled and confirmed for RGB takeover")
+                decky.logger.info("Led Lights: HHD RGB disabled and confirmed for RGB takeover")
                 return "changed"
-            self._set_hhd_status("disable_failed", decky.logger.warning, "Colores: HHD RGB disable was not confirmed; restore marker retained")
+            self._set_hhd_status("disable_failed", decky.logger.warning, "Led Lights: HHD RGB disable was not confirmed; restore marker retained")
             return "failed"
 
     async def _restore_hhd_rgb(self) -> bool:
@@ -1147,9 +1156,9 @@ class Plugin:
                 self._settings["hhd_rgb_restore"] = None
                 self._persist_settings()
                 self._hhd_rgb_status = "restored"
-                decky.logger.info("Colores: HHD RGB ownership restored and confirmed")
+                decky.logger.info("Led Lights: HHD RGB ownership restored and confirmed")
                 return True
-            decky.logger.warning("Colores: HHD RGB restore not confirmed; retry marker retained")
+            decky.logger.warning("Led Lights: HHD RGB restore not confirmed; retry marker retained")
             return False
 
     async def set_battery_breathe(self, on: bool) -> None:
@@ -1274,7 +1283,7 @@ class Plugin:
             task.cancel()
             self._steam_download_task = None
         if active:
-            decky.logger.info("Colores: Steam download shows its progress on the LED bar")
+            decky.logger.info("Led Lights: Steam download shows its progress on the LED bar")
             return
         self._steam_download_task = asyncio.create_task(self._reclaim_leds_later())
 
@@ -1289,11 +1298,11 @@ class Plugin:
                 if self._steam_download_active:
                     return
                 self._reclaim_leds()
-            decky.logger.info("Colores: LED bar reclaimed after Steam download")
+            decky.logger.info("Led Lights: LED bar reclaimed after Steam download")
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: LED reclaim after download failed: %s", error)
+            decky.logger.warning("Led Lights: LED reclaim after download failed: %s", error)
 
     async def get_ambilight_status(self) -> str:
         self._init()
@@ -1312,11 +1321,11 @@ class Plugin:
             if mode == "ambient":
                 await self._ambilight.stop_and_wait()
                 self._audio.stop()
-                decky.logger.info("Colores: ambilight capture stopped for suspend")
+                decky.logger.info("Led Lights: ambilight capture stopped for suspend")
                 return
             if mode != "vu" and self._wants_render_loop():
                 await self._engine.stop_and_wait()
-                decky.logger.info("Colores: lighting render loop stopped for suspend")
+                decky.logger.info("Led Lights: lighting render loop stopped for suspend")
 
     async def get_audio_status(self) -> str:
         self._init()
@@ -1341,13 +1350,18 @@ class Plugin:
     async def set_ambilight_sampling(self, mode: str) -> None:
         await self.patch_profile("global", None, {"ambilight": {"sampling": mode}})
 
+    async def set_ambilight_layout(self, layout: str) -> None:
+        if layout not in AMBILIGHT_LAYOUT_MODES:
+            return
+        await self.patch_profile("global", None, {"ambilight": {"layout": layout}})
+
     async def set_power_led(self, off: bool) -> None:
         self._init()
         self._settings["power_led_off"] = off
         self._persist_settings()
         if self._power_led and self._capabilities.get("powerLed"):
             if not self._power_led.set(off):
-                decky.logger.warning("Colores: power LED write failed (off=%s)", off)
+                decky.logger.warning("Led Lights: power LED write failed (off=%s)", off)
 
     async def set_power_led_state(self, state: str, off: bool) -> None:
         self._init()
@@ -1364,7 +1378,7 @@ class Plugin:
         self._persist_settings()
         if self._power_led and not self._power_led.set_state(state, off):
             decky.logger.warning(
-                "Colores: power LED state write failed (state=%s, off=%s)",
+                "Led Lights: power LED state write failed (state=%s, off=%s)",
                 state,
                 off,
             )
@@ -1454,7 +1468,7 @@ class Plugin:
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: startup persist failed: %s", error)
+            decky.logger.warning("Led Lights: startup persist failed: %s", error)
 
     def _screen_target(self) -> float:
         level = getattr(self, "_screen_level", None)
@@ -1510,7 +1524,7 @@ class Plugin:
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: smart brightness ramp failed: %s", error)
+            decky.logger.warning("Led Lights: smart brightness ramp failed: %s", error)
 
     def _refresh_led_brightness(self, final: bool) -> None:
         if getattr(self, "_calibration_preview", None) is not None:
@@ -1545,7 +1559,7 @@ class Plugin:
                 raise
             except Exception as error:
                 if not failed:
-                    decky.logger.warning("Colores: screen brightness read failed: %s", error)
+                    decky.logger.warning("Led Lights: screen brightness read failed: %s", error)
                     failed = True
                 await asyncio.sleep(SCREEN_IDLE_INTERVAL)
 
@@ -1698,12 +1712,16 @@ class Plugin:
                 self._audio.start({"on_level": self._on_aurora_level})
             else:
                 self._audio.stop()
+            layout = self._capabilities.get("layout")
+            if amb.get("layout") == "edge":
+                layout = build_layout(self._zones, False, "edge")
             self._ambilight.start(
                 {
                     "saturation": 1.0 + (amb["vividness"] / 100) * 1.5,
                     "smoothing": amb["smoothing"],
                     "fps": amb.get("fps", 10),
                     "sampling": amb.get("sampling", "columns"),
+                    "layout": layout,
                     "global_color": not (
                         self._capabilities.get("perZone")
                         or self._capabilities.get("perControllerColor")
@@ -1762,7 +1780,7 @@ class Plugin:
         else:
             await self._restore_hhd_rgb()
         decky.logger.info(
-            "Colores v%s on %s (product=%s board=%s euid=%s driver=%s route=%s color=%s zones=%s ambilight=%s available=%s ledPath=%s lastError=%s socket_guard=%s)",
+            "Led Lights v%s on %s (product=%s board=%s euid=%s driver=%s route=%s color=%s zones=%s ambilight=%s available=%s ledPath=%s lastError=%s socket_guard=%s)",
             read_version(),
             self._device["name"],
             self._device.get("product"),
@@ -1818,7 +1836,7 @@ class Plugin:
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: charger watch failed: %s", error)
+            decky.logger.warning("Led Lights: charger watch failed: %s", error)
 
     async def _resume_watch(self) -> None:
         previous = _suspend_clock()
@@ -1837,17 +1855,17 @@ class Plugin:
                 await asyncio.sleep(RESUME_REAPPLY_DELAY)
                 if await self._restore_after_resume():
                     decky.logger.info(
-                        "Colores: restored lighting after %.1fs suspend", suspended_for
+                        "Led Lights: restored lighting after %.1fs suspend", suspended_for
                     )
                 else:
                     decky.logger.warning(
-                        "Colores: could not restore lighting after %.1fs suspend",
+                        "Led Lights: could not restore lighting after %.1fs suspend",
                         suspended_for,
                     )
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: resume watch failed: %s", error)
+            decky.logger.warning("Led Lights: resume watch failed: %s", error)
 
     async def _restore_after_resume(self) -> bool:
         async with self._resume_lock:
@@ -1871,7 +1889,7 @@ class Plugin:
                 except asyncio.CancelledError:
                     raise
                 except Exception as error:
-                    decky.logger.warning("Colores: resume reconnect failed: %s", error)
+                    decky.logger.warning("Led Lights: resume reconnect failed: %s", error)
                 if attempt + 1 < RESUME_RECONNECT_ATTEMPTS:
                     await asyncio.sleep(RESUME_RECONNECT_INTERVAL)
             self._journal_state(
@@ -1901,7 +1919,7 @@ class Plugin:
         except asyncio.CancelledError:
             raise
         except Exception as error:
-            decky.logger.warning("Colores: force-control watch failed: %s", error)
+            decky.logger.warning("Led Lights: force-control watch failed: %s", error)
 
     async def _stop_background_tasks(self):
         # Decky closes the plugin socket when it stops us and its read loop then spins
@@ -1944,7 +1962,7 @@ class Plugin:
 
         def stage(name):
             decky.logger.info(
-                "Colores unload:%s at=%dms", name, (time.monotonic() - started) * 1000
+                "Led Lights unload:%s at=%dms", name, (time.monotonic() - started) * 1000
             )
 
         try:
@@ -1960,7 +1978,7 @@ class Plugin:
             if getattr(self, "_engine", None):
                 self._engine.stop()
                 stage("engine")
-            decky.logger.info("Colores unloaded")
+            decky.logger.info("Led Lights unloaded")
         finally:
             self._stop_journal("unload")
 
@@ -1969,7 +1987,7 @@ class Plugin:
             await self._stop_background_tasks()
             if getattr(self, "_ready", False):
                 await self._restore_hhd_rgb()
-            decky.logger.info("Colores uninstalled")
+            decky.logger.info("Led Lights uninstalled")
         finally:
             self._stop_journal("uninstall")
 
@@ -1987,7 +2005,7 @@ class Plugin:
             self._journal_handler = handler
             self._journal_restore_handlers = journal.queue_logger_handlers(decky.logger)
         except Exception as error:  # noqa: BLE001
-            decky.logger.error("Colores: journal unavailable: %s", error)
+            decky.logger.error("Led Lights: journal unavailable: %s", error)
             return
         journal.active = diary
         self._loop_watchdog = journal.LoopWatchdog(diary)

@@ -2048,8 +2048,8 @@ def test_export_replaces_a_planted_symlink_without_following_it(main_module, tmp
     target = tmp_path / "victim.txt"
     target.write_text("keep")
     (tmp_path / "Documents").mkdir()
-    (tmp_path / "Documents" / "Colores").mkdir()
-    planted = tmp_path / "Documents" / "Colores" / "colores-estilos.json"
+    (tmp_path / "Documents" / "Led Lights").mkdir()
+    planted = tmp_path / "Documents" / "Led Lights" / "colores-estilos.json"
     planted.symlink_to(target)
     p._settings["styles"] = [{"name": "Azul"}]
 

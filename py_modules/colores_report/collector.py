@@ -180,7 +180,7 @@ def tail_error_logs(
 # a plugin's unload ends in SIGKILL, a reload burst and possibly a frozen, force-rebooted device.
 _LOADER_LIFECYCLE_GREP = (
     "(?i)still alive|SIGKILL|has been stopped in|already loaded|Shutting down|"
-    "Loaded Colores|Colores unload|Failed to (start|unload)|Loop exited|socket_guard"
+    "Loaded Led Lights|Led Lights unload|Failed to (start|unload)|Loop exited|socket_guard"
 )
 
 _KERNEL_CMDS = {

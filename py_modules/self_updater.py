@@ -25,6 +25,9 @@ import decky
 
 from version import read_version  # top-level import (Decky adds py_modules to sys.path)
 
+# Led Lights is a local fork: it has no release feed of its own, and checking the
+# upstream owner would offer an update that overwrites the fork. Keep it off.
+_SELF_UPDATE_ENABLED = False
 _GITHUB_OWNER = "Hooandee"
 _UA = "decky-self-updater"
 
@@ -136,6 +139,16 @@ def check(force: bool = False) -> dict:
     if _cache is not None and not force:
         return _cache
     current = read_version()
+    if not _SELF_UPDATE_ENABLED:
+        _cache = {
+            "current": current,
+            "latest": current,
+            "has_update": False,
+            "notes": "",
+            "download_url": "",
+            "error": "",
+        }
+        return _cache
     result = {
         "current": current,
         "latest": current,
@@ -168,6 +181,8 @@ def install() -> dict:
 
     Returns {ok, needs_restart, message}. Never raises.
     """
+    if not _SELF_UPDATE_ENABLED:
+        return {"ok": False, "needs_restart": False, "message": "disabled"}
     info = check()
     url = str(info.get("download_url") or "")
     if not url:

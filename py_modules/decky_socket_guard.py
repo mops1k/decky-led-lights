@@ -54,7 +54,7 @@ def install(kill=os.kill, getppid=os.getppid, log=None) -> str:
         if getppid() != loader_pid:
             if log is not None:
                 log.warning(
-                    "Decky loader %s is gone (parent now %s); shutting Colores down",
+                    "Decky loader %s is gone (parent now %s); shutting Led Lights down",
                     loader_pid, getppid(),
                 )
             kill(os.getpid(), signal.SIGTERM)

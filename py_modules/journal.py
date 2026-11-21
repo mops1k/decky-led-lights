@@ -326,7 +326,7 @@ def last_record(directory: str, source: str, *, max_bytes: int = 1_000_000) -> d
 
 
 _KEY_SOURCES = ("rpc", "session", "context", "state", "hw", "loop")
-_KEY_MESSAGES = ("Colores v", "suspend", "restored lighting")
+_KEY_MESSAGES = ("Led Lights v", "suspend", "restored lighting")
 
 
 def _is_key_record(record: dict) -> bool:

@@ -22,7 +22,7 @@ function fakeSteamUser() {
 }
 
 describe("startSuspendPreparation", () => {
-  it("only prepares Colores when Steam finishes its pre-suspend work", () => {
+  it("only prepares Led Lights when Steam finishes its pre-suspend work", () => {
     const steam = fakeSteamUser();
     const prepare = vi.fn(async () => undefined);
 

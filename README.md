@@ -1,93 +1,146 @@
-# Colores ✨
+# Led Lights ✨
 
-Control de luces RGB para PCs portátiles, como plugin de [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader).
+RGB LED control for handheld gaming PCs, packaged as a [Decky Loader](https://github.com/decky-loader) plugin.
 
-Español · [English](README.en.md)
-
-<p align="center">
-  <a href="https://ko-fi.com/hooandee"><img src="https://img.shields.io/badge/Ko--fi-Inv%C3%ADtame%20un%20caf%C3%A9-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
-  <a href="https://www.patreon.com/hooandee"><img src="https://img.shields.io/badge/Patreon-Ap%C3%B3yame-FF424D?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon"></a>
-  <a href="https://www.youtube.com/channel/UCDsSJByXklp6xc_WwQJI7Lw/join"><img src="https://img.shields.io/badge/YouTube-Hazte%20miembro-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube"></a>
-  <a href="https://discord.gg/x2ZNARy"><img src="https://img.shields.io/badge/Discord-%C3%9Anete-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://linktr.ee/hooandee"><img src="https://img.shields.io/badge/Todos%20mis%20enlaces-Linktree-43E660?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
-</p>
+English · [Русский](README.ru.md)
 
 <p align="center">
-  <a href="https://github.com/Hooandee/decky-colores/actions/workflows/ci.yml"><img src="https://github.com/Hooandee/decky-colores/actions/workflows/ci.yml/badge.svg" alt="Estado del CI"></a>
-  <a href="https://github.com/Hooandee/decky-colores/releases/latest"><img src="https://img.shields.io/github/v/release/Hooandee/decky-colores?label=%C3%BAltima%20versi%C3%B3n&color=blue" alt="Última versión"></a>
+  <a href="https://github.com/mops1k/decky-led-lights/actions/workflows/ci.yml"><img src="https://github.com/mops1k/decky-led-lights/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/mops1k/decky-led-lights/releases/latest"><img src="https://img.shields.io/github/v/release/mops1k/decky-led-lights?label=latest&color=blue" alt="Latest release"></a>
 </p>
 
-Colores detecta tu consola al arrancar y te muestra solo lo que tu máquina puede hacer de verdad. Sin configuración, sin tocar archivos, sin elegir tu modelo en una lista. Lo abres desde el menú de acceso rápido y ya está.
+Led Lights is a fork of [Colores](https://github.com/Hooandee/decky-colores) by
+[Hooandee](https://github.com/Hooandee). It detects your handheld at boot and only
+offers what the machine can really do: no device list, no config files. Open it from
+the Steam Quick Access Menu and pick a colour.
 
-## Vídeo
+## What this fork adds
 
-En este vídeo enseño y explico el plugin a fondo:
+- **Edge ambilight.** The upstream layout feeds each stick ring from the half of the
+  screen around that stick. This fork adds a second layout, **Screen edges**: every
+  LED takes the colour of the nearest screen border, like a TV ambilight. The four
+  left-stick zones read the left edge, the four right-stick zones the right edge, and
+  the ABXY zone reads the bottom edge. Both layouts are selectable in the panel.
+- **Ambilight in Desktop Mode.** Upstream only captures in Game Mode through PipeWire
+  from gamescope. Led Lights keeps that path and adds a desktop path: the active
+  screen is captured through KWin's `ScreenShot2` D-Bus API, with the same smoothing,
+  vividness and capture-rate controls. No portal dialog, no extra permissions.
+- **Languages.** English is the default language and a complete Russian translation
+  is included. The self-updater is disabled: the fork has no release feed of its own.
+- **CI and packaging.** GitHub Actions run the backend and frontend test suites, build
+  the bundle and attach a ready-to-install ZIP; tagging `v*` publishes a release.
 
-[![Colores en acción](https://img.youtube.com/vi/ug5Nh0YtadE/maxresdefault.jpg)](https://youtu.be/ug5Nh0YtadE)
+## Supported devices
 
-## Dispositivos compatibles
-
-| Marca | Modelos | Detalles |
+| Brand | Models | Details |
 | --- | --- | --- |
-| ASUS ROG | Ally, Ally X, Xbox Ally, Xbox Ally X | 4 zonas RGB en los anillos de los joysticks |
-| Lenovo Legion | Go, Go 2, Go S | Color por mando, botón de reconexión (ver más abajo) |
-| MSI | Claw, Claw 8 AI+ | 9 zonas |
-| AYN | Thor, Odin 3 (Linux, Armada OS) | 8 zonas en los anillos de los joysticks |
+| MSI | Claw, Claw A8, Claw 8 AI+ | 9 zones: 4 around the right stick, 4 around the left stick, 1 on ABXY |
+| ASUS ROG | Ally, Ally X, Xbox Ally, Xbox Ally X | 4 RGB zones on the joystick rings |
+| Lenovo Legion | Go, Go 2, Go S | Per-controller colour, reconnect button (see below) |
+| AYN | Thor, Odin 3 (Linux, Armada OS) | 8 zones on the joystick rings |
 
-¿Tu consola no está en la lista? Colores intenta usarla igualmente leyendo los LEDs que el sistema expone. Verás esas funciones marcadas como experimentales: puedes probarlas, pero puede que no respondan bien hasta que tenga esa máquina entre manos para calibrarla. Si ni siquiera hay LEDs que controlar, el plugin te lo dice y no se queda colgado.
+The edge layout and the desktop capture path were developed and verified on a
+**MSI Claw A8 (BZ2EM)**, 9 zones. On devices with a single global LED the plugin
+falls back to one averaged colour.
 
-## Qué puedes hacer
+Any other handheld: Led Lights still tries to drive whatever LEDs the system exposes
+and marks those features experimental, so nothing hangs when there is nothing to
+control.
 
-- **Color fijo.** Elige un tono y una saturación. Lo más simple y lo que casi todo el mundo quiere.
-- **Brillo.** En las consolas que lo permiten.
-- **Degradados.** Un editor con presets (Atardecer, Océano, Aurora, Lava, Galaxia y más), ajuste color a color por zona, una paleta automática y un botón de "Sorpréndeme" para cuando no te decidas. Puedes guardar tus degradados favoritos y reutilizarlos.
-- **Efectos.** Respiración, arcoíris, onda, ciclo y espiral. Los efectos de color usan tu color fijo, y varios pueden correr sobre tu degradado personalizado si activas esa opción.
-- **Ambilight.** Las luces siguen lo que pasa en pantalla, tomando el color de la zona cercana a cada joystick. Tiene controles de intensidad, suavizado y tasa de captura.
-- **Español, inglés, italiano, alemán, portugués de Brasil y francés.** Cambias de idioma desde un selector compacto en Ajustes. El plugin arranca en español.
+## What you can do
 
-Todo se adapta a tu consola. Si tu máquina solo tiene un color global, no te muestro un editor de zonas que no va a hacer nada.
+- **Solid colour** with hue and saturation controls.
+- **Brightness** on the devices that allow it.
+- **Gradients** with a per-zone editor, presets (Sunset, Ocean, Aurora, Lava, Galaxy
+  and more), an auto palette, a "Surprise me" button and saved favourites.
+- **Effects**: breathing, rainbow, wave, cycle and spiral, optionally running on your
+  own gradient.
+- **Ambilight** that follows the screen, with vividness, smoothing and capture rate.
+- **Sensors, clock and audio modes**: battery level, temperature, performance load,
+  a time-of-day tint and a VU meter.
+- **Languages**: English (default), Spanish, Russian, Italian, German, Brazilian
+  Portuguese and French, switchable in Settings.
 
-## Cosas a tener en cuenta
+## Ambilight capture
 
-- **Ambilight solo funciona en Modo Juego con un juego abierto.** Necesita leer la imagen que compone Modo Juego. En Escritorio o en Big Picture no hay nada que capturar, y el plugin te lo avisa con un mensaje en pantalla en lugar de fallar en silencio.
+| Session | Source | Helper |
+| --- | --- | --- |
+| Game Mode | gamescope PipeWire node (`pw-dump` / `wpctl`) | `py_modules/pw_capture.py` (falls back to GStreamer) |
+| Desktop Mode (KDE) | KWin `org.kde.KWin.ScreenShot2` → `CaptureActiveScreen` | `py_modules/kwin_capture.py` |
 
-- **Legion Go: los mandos se desconectan al suspender.** Cuando la consola se duerme y vuelve, los mandos a veces pierden el canal por el que reciben los colores. Por eso hay un botón **Reconectar mandos**: si las luces dejan de responder después de suspender, púlsalo y vuelven a la vida. No es un fallo del plugin, es cómo se comportan esos mandos.
+The plugin picks the source automatically: a running gamescope compositor means Game
+Mode, otherwise it captures the desktop. Frames are downscaled to 32×18 on the host
+Python (numpy when present) and smoothed in the plugin process. The desktop path is
+capped at 15 fps and measured at roughly 8 % of one CPU core on the Claw A8.
 
-- **Legion Go: un solo color por mando.** El firmware de estas consolas no permite varios colores a la vez en un mismo mando, así que el degradado se ve como un fundido suave entre colores en lugar de zonas separadas. La espiral, además, es el efecto giratorio propio del firmware ("Espiral GO").
+## Installation
 
-- **Consolas no listadas.** Las funciones experimentales son justo eso, experimentales. Si tienes una máquina que no aparece arriba y quieres ayudar a darle soporte, abre un issue y lo veo 🙌.
+1. Download `LedLights-<version>.zip` from the [latest release](https://github.com/mops1k/decky-led-lights/releases/latest).
+2. In Decky, enable Developer mode and use **Install Plugin from ZIP**.
 
-## Instalación
+The plugin needs root to write the LEDs; Decky asks for it during installation.
 
-Desde la tienda de plugins de Decky es la forma más cómoda cuando esté disponible. Para instalar a mano:
+> **Do not install Led Lights next to Colores.** Both plugins talk to the same HID
+> zones and will fight over them. Uninstall or disable the other one first.
 
-1. Descarga `Colores.zip` desde la [última release](https://github.com/Hooandee/decky-colores/releases/latest).
-2. En Decky, activa el modo desarrollador e instala el zip desde la opción de instalar desde archivo.
+## Using it
 
-Colores necesita permisos de root para escribir en los LEDs del sistema. Decky te lo pedirá al instalar.
+1. Open the Quick Access Menu and select **Led Lights**.
+2. Choose the **Ambilight** mode tab.
+3. Pick the layout: **Sticks** (upstream behaviour) or **Screen edges** (TV-style).
+4. Tune vividness, smoothing and capture rate. LED colour follows the nearest screen
+   border, so a red wall on the left lights the left stick ring red.
 
-## Saca más partido a tu consola
-
-Hago vídeos sobre Handheld PCs, trucos, ajustes y cómo exprimir estas pequeñajas. Si Colores te ha gustado, pásate por mi canal: [youtube.com/@Hooandee](https://www.youtube.com/@Hooandee).
-
-## Agradecimientos
-
-El motor de control de luces por dispositivo está adaptado de [HueSync](https://github.com/honjow/HueSync), de honjow, publicado bajo licencia BSD 3-Clause. Su trabajo en los drivers de cada marca es lo que hace posible que Colores hable con tantas consolas distintas, y conservo su aviso de copyright como pide la licencia. Gracias de verdad por compartirlo.
-
-Colores también se apoya en la [plantilla de plugins de Decky](https://github.com/SteamDeckHomebrew/decky-plugin-template) de Steam Deck Homebrew.
-
-Hecho con todo el cariño por las portátiles ❤️.
-
-## Desarrollo
+## Development
 
 ```bash
-pnpm install && pnpm build   # genera dist/index.js
-python -m pytest             # tests del backend
+pnpm install && pnpm build     # bundle the frontend into dist/index.js
+pnpm typecheck                 # tsc --noEmit
+pnpm test:fe                   # vitest
+python -m pytest               # backend tests
+python3 scripts/package.py     # build packages/LedLights-<version>.zip
 ```
 
-## Licencia
+Install a locally built ZIP with Decky's Developer menu, or from a shell as root:
 
-GPL-3.0-or-later (copyleft). Ver [LICENSE](LICENSE). Cualquier fork o versión
-distribuida debe publicar también su código bajo la GPL: nadie puede cerrarlo.
-Las porciones adaptadas de HueSync conservan su aviso BSD 3-Clause (compatible
-con la GPL); ver [NOTICE](NOTICE).
+```bash
+pkexec bash scripts/install.sh packages/LedLights-<version>.zip
+systemctl restart plugin_loader
+```
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+- **backend**: `ruff check` and `pytest` on Python 3.11
+- **frontend**: `pnpm typecheck`, i18n content tests, `vitest` and the production build,
+  on Node 20 and 22 with pnpm cache
+- **package**: builds the ZIP and uploads it as a workflow artifact
+
+`.github/workflows/release.yml` runs on `v*` tags: builds the ZIP, generates release
+notes and uploads the asset.
+
+## Known limitations
+
+- Desktop capture uses KWin (Plasma). GNOME/Sway sessions have no capture path yet.
+- Game Mode capture inherits the upstream PipeWire path; it has not been re-verified
+  on this fork's build yet.
+- Lenovo Legion Go: controllers can lose the colour channel after suspend (use
+  **Reconnect controllers**) and only one colour per controller is possible in
+  firmware; the spiral effect is the firmware's own.
+- Unlisted devices run in experimental mode until someone calibrates them.
+
+## Credits
+
+- [Hooandee/decky-colores](https://github.com/Hooandee/decky-colores) — the upstream
+  plugin this project is forked from.
+- [honjow/HueSync](https://github.com/honjow/HueSync) — the per-device lighting engine
+  (BSD 3-Clause; its notice is kept in [NOTICE](NOTICE)).
+- [Decky plugin template](https://github.com/SteamDeckHomebrew/decky-plugin-template)
+  by Steam Deck Homebrew.
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE). Any fork or distributed build must publish
+its source under the GPL as well. Portions adapted from HueSync keep their BSD
+3-Clause notice (GPL-compatible); see [NOTICE](NOTICE).

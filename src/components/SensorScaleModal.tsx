@@ -92,7 +92,7 @@ export const SensorScaleModal: FC<Props> = ({
       await onSave(sensor, bands);
       closeModal?.();
     } catch (error) {
-      console.error("Colores: sensor scale save failed", error);
+      console.error("Led Lights: sensor scale save failed", error);
       setSaveError(true);
       setSaving(false);
     }

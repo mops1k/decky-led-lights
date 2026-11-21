@@ -17,6 +17,7 @@ export const setGradientSpeed = callable<[speed: number], void>("set_gradient_sp
 export const setEffect = callable<[id: string, speed: number, useGradient: boolean], void>("set_effect");
 export const setAmbilight = callable<[vividness: number, smoothing: number, fps: number], void>("set_ambilight");
 export const setAmbilightSampling = callable<[mode: string], void>("set_ambilight_sampling");
+export const setAmbilightLayout = callable<[layout: string], void>("set_ambilight_layout");
 export const getAmbilightStatus = callable<[], string>("get_ambilight_status");
 export const prepareSuspend = callable<[], void>("prepare_suspend");
 export const setSteamDownloadActive = callable<[active: boolean], void>("set_steam_download_active");

@@ -40,7 +40,7 @@ export const StylesModal: FC<Props> = ({ initial, actions, folder, onApplied, cl
     try {
       setNotice(await work());
     } catch (error) {
-      console.error("Colores: styles action failed", error);
+      console.error("Led Lights: styles action failed", error);
       setNotice(t("styles.error"));
     } finally {
       setBusy(false);
@@ -170,7 +170,7 @@ const SaveStyleModal: FC<{
       await actions.save(wanted);
       closeModal?.();
     } catch (error) {
-      console.error("Colores: style save failed", error);
+      console.error("Led Lights: style save failed", error);
       setNotice(t("styles.error"));
       setBusy(false);
     }

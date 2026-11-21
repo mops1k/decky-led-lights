@@ -60,6 +60,7 @@ def test_run_retries_when_source_missing(monkeypatch):
     # (and stay alive) instead of giving up after one miss — otherwise ambient mode
     # never recovers without manual intervention.
     monkeypatch.setattr(ambilight_mod, "RETRY_INTERVAL", 0.001)
+    monkeypatch.setattr(ambilight_mod, "gamescope_running", lambda proc_root="/proc": True)
     applied = []
     amb = Ambilight(lambda colors: applied.append(list(colors)), zones=4, runtime_dir=None)
     async def _no_node():
@@ -88,6 +89,7 @@ def test_run_retries_when_source_missing(monkeypatch):
 def test_run_shows_fallback_color_when_source_missing(monkeypatch):
     # No game source -> hold the user's last solid color instead of going dark.
     monkeypatch.setattr(ambilight_mod, "RETRY_INTERVAL", 0.001)
+    monkeypatch.setattr(ambilight_mod, "gamescope_running", lambda proc_root="/proc": True)
     applied = []
     amb = Ambilight(lambda colors: applied.append(list(colors)), zones=4, runtime_dir=None)
     async def _no_node():
@@ -270,6 +272,7 @@ def test_run_uses_the_pipewire_helper_without_pw_dump(monkeypatch):
         raise AssertionError("pw-dump used")
 
     monkeypatch.setattr(ambilight_mod, "_helper_python", lambda: "/host/python3")
+    monkeypatch.setattr(ambilight_mod, "gamescope_running", lambda proc_root="/proc": True)
     monkeypatch.setattr(ambilight_mod.asyncio, "create_subprocess_exec", fake_exec)
     monkeypatch.setattr(ambilight_mod, "_backend", None)
     amb = Ambilight(lambda colors: None, zones=2, runtime_dir=None)
@@ -299,8 +302,58 @@ def test_the_capture_helper_is_offered_on_every_architecture(monkeypatch):
 def test_the_helper_is_preferred_over_gstreamer(monkeypatch):
     monkeypatch.setattr(ambilight_mod, "_backend", None)
     monkeypatch.setattr(ambilight_mod, "_helper_python", lambda: "/host/python3")
+    monkeypatch.setattr(ambilight_mod, "gamescope_running", lambda proc_root="/proc": True)
     amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None)
     assert asyncio.run(amb._select_backend()) == ("pipewire", "/host/python3")
+
+
+def test_desktop_session_captures_through_kwin(monkeypatch):
+    monkeypatch.setattr(ambilight_mod, "_backend", None)
+    monkeypatch.setattr(ambilight_mod, "_helper_python", lambda: "/host/python3")
+    monkeypatch.setattr(ambilight_mod, "gamescope_running", lambda proc_root="/proc": False)
+    amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None)
+    assert asyncio.run(amb._select_backend()) == ("kwin", "/host/python3")
+
+
+def test_an_unavailable_desktop_falls_back_to_pipewire(monkeypatch):
+    monkeypatch.setattr(ambilight_mod, "_backend", ("kwin", "/host/python3"))
+    monkeypatch.setattr(ambilight_mod, "_helper_python", lambda: "/host/python3")
+    assert ambilight_mod._fall_back_to_pipewire() == ("pipewire", "/host/python3")
+
+
+def test_desktop_capture_rate_is_capped_below_the_device_render_rate():
+    ambient = Ambilight(lambda colors: None, zones=1, runtime_dir=None)
+    ambient._options = {"fps": 30}
+    assert ambient._kwin_fps() == ambilight_mod.KWIN_MAX_FPS
+    limited = Ambilight(lambda colors: None, zones=1, runtime_dir=None, max_fps=5)
+    assert limited._kwin_fps() == 5
+
+
+def test_gamescope_running_reads_process_names(tmp_path):
+    (tmp_path / "1").mkdir()
+    (tmp_path / "1" / "comm").write_text("kwin_wayland\n")
+    (tmp_path / "2").mkdir()
+    (tmp_path / "2" / "comm").write_text("gamescope\n")
+    (tmp_path / "notapid").mkdir()
+    assert ambilight_mod.gamescope_running(str(tmp_path)) is True
+    (tmp_path / "2" / "comm").write_text("python3\n")
+    assert ambilight_mod.gamescope_running(str(tmp_path)) is False
+
+
+def test_changing_the_ambilight_layout_reconnects():
+    layout = [{"name": "Lights", "region": [0.0, 0.0, 1.0, 1.0], "zones": [0]}]
+
+    async def drive():
+        amb = Ambilight(lambda colors: None, zones=1, runtime_dir=None, layout=layout)
+        old_task = asyncio.create_task(asyncio.sleep(60))
+        amb._task = old_task
+        replacement = [{"name": "Edge", "region": [0.0, 0.0, 0.1, 1.0], "zones": [0]}]
+        amb.start({"fps": 10, "layout": replacement})
+        assert amb._task is not old_task
+        assert amb._layout[0]["name"] == "Edge"
+        amb.stop()
+
+    asyncio.run(drive())
 
 
 def test_without_host_libpipewire_capture_uses_gstreamer(monkeypatch):

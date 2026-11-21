@@ -55,7 +55,7 @@ export const ColorCalibrationModal: FC<Props> = ({ initial, closeModal, onSaved 
       saved.current = true;
       closeModal?.();
     } catch (error) {
-      console.error("Colores: color calibration save failed", error);
+      console.error("Led Lights: color calibration save failed", error);
       setSaving(false);
     }
   };
