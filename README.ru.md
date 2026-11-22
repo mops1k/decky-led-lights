@@ -126,10 +126,13 @@ systemctl restart plugin_loader
 - **backend**: `ruff check` и `pytest` на Python 3.11;
 - **frontend**: `pnpm typecheck`, тесты содержимого переводов, `vitest` и сборка,
   на Node 20 и 22 с кешем pnpm;
-- **package**: сборка ZIP и публикация его как артефакта workflow.
+- **package**: сборка ZIP, проверка раскладки через `scripts/verify_package.py`
+  (наличие бандла, нужных модулей, одна корневая папка, имя архива совпадает с
+  версией) и публикация артефакта.
 
-`.github/workflows/release.yml` срабатывает на теги `v*`: собирает ZIP, генерирует
-заметки к релизу и прикрепляет файл.
+`.github/workflows/release.yml` срабатывает на теги `v*`: подставляет версию из тега
+(`scripts/stamp_version.py`), собирает и проверяет ZIP, генерирует заметки к релизу и
+прикрепляет файл.
 
 ## Известные ограничения
 

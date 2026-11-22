@@ -25,9 +25,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Stamp the version from the tag
+        run: python3 scripts/stamp_version.py "${GITHUB_REF_NAME}"
       - run: pnpm build
       - name: Build installable ZIP
         run: python3 scripts/package.py
+      - name: Verify the ZIP layout
+        run: python3 scripts/verify_package.py
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

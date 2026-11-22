@@ -1,6 +1,6 @@
 {
   "name": "decky-led-lights",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "RGB LED control with TV-style edge ambilight for handheld gaming PCs (fork of decky-colores).",
   "type": "module",
   "scripts": {

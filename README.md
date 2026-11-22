@@ -129,10 +129,13 @@ systemctl restart plugin_loader
 - **backend**: `ruff check` and `pytest` on Python 3.11
 - **frontend**: `pnpm typecheck`, i18n content tests, `vitest` and the production build,
   on Node 20 and 22 with pnpm cache
-- **package**: builds the ZIP and uploads it as a workflow artifact
+- **package**: builds the ZIP, verifies its layout with
+  `scripts/verify_package.py` (bundle present, required modules, one top-level
+  folder, archive name matches the version) and uploads it as a workflow artifact
 
-`.github/workflows/release.yml` runs on `v*` tags: builds the ZIP, generates release
-notes and uploads the asset.
+`.github/workflows/release.yml` runs on `v*` tags: stamps the version from the tag
+(`scripts/stamp_version.py`), builds and verifies the ZIP, generates release notes and
+uploads the asset.
 
 ## Known limitations
 

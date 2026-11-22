@@ -65,7 +65,6 @@ jobs:
   package:
     name: Package plugin ZIP
     needs: [backend, frontend]
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +81,10 @@ jobs:
       - run: pnpm build
       - name: Build installable ZIP
         run: python3 scripts/package.py
+      - name: Verify the ZIP layout
+        run: python3 scripts/verify_package.py
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
         with:
           name: led-lights-plugin
           path: packages/*.zip
